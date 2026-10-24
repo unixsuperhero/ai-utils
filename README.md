@@ -1,5 +1,9 @@
 # AI utilities
 
+## aiview moved
+
+aiview now lives at `~/proj/o-ai` ([github.com/unixsuperhero/o-ai](https://github.com/unixsuperhero/o-ai)) as the family tool `o-ai`; its git history was merged there on 2026-10-24. Run it as `o ai …` or `mtm ai …`; its TUI is `o tui` after `o-nabe extension register o-ai`. The `aiview/` directory here is frozen and will be removed later. `aiwork.zsh` stays here.
+
 ## aiwork — named OMP workspaces
 
 A zsh function for creating reusable workspace profiles and starting fresh [OMP](https://github.com/can1357/oh-my-pi) sessions. Profiles live centrally, not inside your projects. It supports one or multiple project directories and preserves your existing `omp` shell function and model/authentication defaults.
@@ -70,3 +74,39 @@ These are workspace profiles, not separate OMP authentication/model profiles. Pe
 ### Verification
 
 The packaged script was smoke-tested with temporary central storage: creation, listing, duplicate/traversal rejection, paths containing spaces, and no writes into the project directory. Actual OMP RPC startup confirmed the generated briefing and project root were loaded with zero conversation messages. No model request was needed for the startup check.
+
+## mgmt — itemize, review, apply
+
+Reusable skill: [`mgmt/SKILL.md`](mgmt/SKILL.md). Terminal tool: [`mgmt/mgmt.py`](mgmt/mgmt.py). Requires Python 3 on macOS/Linux; no third-party dependencies.
+
+Tell your assistant:
+
+```text
+Read ~/hub/ai/utils/mgmt/SKILL.md and use it to itemize [the material I specify].
+Let me review the items before changing anything.
+```
+
+The assistant creates an inventory and persistent session, then gives you a command:
+
+```sh
+python3 ~/hub/ai/utils/mgmt/mgmt.py review /path/to/session.json
+```
+
+In the terminal checklist:
+
+```text
+show 3
+check 3
+action 4 rewrite more concisely
+note 4 Preserve the examples
+uncheck 3
+done
+```
+
+Every decision saves immediately. Reopen the same session to continue. Unselected items remain untouched. Checking selects the action established for that session; custom actions are unrestricted text.
+
+Then tell the assistant: **“Apply the mgmt session at /path/to/session.json.”** The skill's apply phase executes your selections and records verified results. The CLI's `apply` command produces a locked work queue for the assistant, **not standalone execution of arbitrary instructions**. Completed items are skipped on subsequent applies; interrupted operations require reconciliation before retrying.
+
+Sessions default to `~/.local/state/mgmt/`, outside your project. They contain source excerpts and decisions; session files are owner-readable/writable only. Nothing is installed into global skill discovery automatically: load the skill by path as above, or register its directory through your assistant's existing skill mechanism.
+
+Verified with a disposable source file: terminal review commands, reopening saved choices, selected-only removal by an executor, completion receipts, repeated-apply exclusion, interrupted-run protection, private session permissions, and overwrite rejection.
