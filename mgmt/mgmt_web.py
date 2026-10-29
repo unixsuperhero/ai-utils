@@ -94,6 +94,11 @@ def serve(root, port, open_browser, sessions):
                 elif route.path == '/api/session':
                     identity = parse_qs(route.query).get('id', [''])[0]
                     self.respond(200, envelope(identity))
+                elif route.path == '/api/export':
+                    identity = parse_qs(route.query).get('id', [''])[0]
+                    current = envelope(identity)
+                    self.respond(200, dict(id=identity, revision=current['revision'],
+                                           text=sessions.export(current['data'], paths[identity])))
                 elif route.path in ('/', '/web.js', '/web.css'):
                     name, mime = {'/': ('web.html', 'text/html'), '/web.js': ('web.js', 'text/javascript'), '/web.css': ('web.css', 'text/css')}[route.path]
                     body = (assets / name).read_bytes()

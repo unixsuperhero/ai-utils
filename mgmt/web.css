@@ -440,6 +440,56 @@ legend {
   background: transparent;
   color: var(--muted);
 }
+.actions button.recommended:not([aria-pressed="true"]) {
+  border-style: dashed;
+  border-color: #b98a3e;
+}
+.actions button.recommended::after {
+  content: " · rec.";
+  font: 9px var(--mono);
+  opacity: 0.8;
+}
+.recommendation {
+  padding: 10px 12px;
+  border-left: 3px solid #b98a3e;
+  background: #fbf3e2;
+  margin: 0 0 18px;
+  overflow-wrap: anywhere;
+}
+.recommendation.accepted {
+  border-left-color: var(--green);
+  background: var(--green-soft);
+}
+.recommendation-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.recommendation-heading button {
+  font-size: 11px;
+}
+#recommendation-text {
+  margin: 6px 0 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+.changed-flag {
+  padding: 10px 12px;
+  border-left: 3px solid var(--red);
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+kbd {
+  font: 10px var(--mono);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 4px;
+  background: var(--white);
+}
 .custom-label {
   display: block;
   font-size: 10px;

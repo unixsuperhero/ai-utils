@@ -15,6 +15,9 @@
         ><span>review desk<small>LOCAL WORKSPACE</small></span></a
       >
       <span class="safety">Decide here. Apply with your assistant.</span>
+      <button id="export" disabled title="Markdown with fenced JSON to paste back to an agent (e)">
+        Copy export
+      </button>
       <button id="handoff" class="primary" disabled>
         Copy handoff <span aria-hidden="true">↗</span>
       </button>
@@ -103,20 +106,30 @@
                 <pre id="item-details"></pre>
               </details>
               <div id="result" class="result" hidden></div>
+              <div id="changed-flag" class="changed-flag" hidden>
+                The source text changed since this decision was made. Recheck
+                it; any change clears this flag.
+              </div>
+              <section id="recommendation" class="recommendation" hidden>
+                <div class="recommendation-heading">
+                  <span id="recommendation-state" class="eyebrow"></span
+                  ><button type="button" id="accept">
+                    Accept <kbd>a</kbd>
+                  </button>
+                </div>
+                <p id="recommendation-text"></p>
+              </section>
               <fieldset id="decision-fields">
                 <legend>What should happen?</legend>
                 <p class="field-help">
                   Choose freely. Clear leaves this item untouched.
                 </p>
-                <div class="actions" role="group" aria-label="Choose an action">
-                  <button type="button" data-action="remove" class="remove">
-                    Remove</button
-                  ><button type="button" data-action="keep">Keep</button
-                  ><button type="button" data-action="revise">Revise</button
-                  ><button type="button" data-action="" class="clear">
-                    Clear
-                  </button>
-                </div>
+                <div
+                  id="actions"
+                  class="actions"
+                  role="group"
+                  aria-label="Choose an action"
+                ></div>
                 <label class="custom-label" for="custom-action"
                   >Or name your own action</label
                 ><input
@@ -138,6 +151,12 @@
                   A note alone does not select an action. To request changes,
                   choose an action above.
                 </p>
+                <p class="field-help keys">
+                  Keys: <kbd>j</kbd>/<kbd>k</kbd> item · <kbd>1</kbd>–<kbd>9</kbd>
+                  action · <kbd>a</kbd> accept recommendation · <kbd>u</kbd> next
+                  undecided · <kbd>i</kbd> note · <kbd>Esc</kbd> leave a field ·
+                  <kbd>e</kbd> export
+                </p>
               </fieldset>
               <div class="save-row">
                 <span id="save-state" role="status" aria-live="polite"
@@ -152,8 +171,8 @@
     </div>
     <div id="notice" role="status" aria-live="polite" hidden></div>
     <dialog id="handoff-dialog">
-      <h2>Ready when you are.</h2>
-      <p>
+      <h2 id="handoff-heading">Ready when you are.</h2>
+      <p id="handoff-help">
         Copy this request to your assistant. It authorizes the selected actions;
         opening this dialog does not execute them.
       </p>
@@ -165,6 +184,7 @@
       ></textarea>
       <div class="dialog-actions">
         <button id="close-handoff">Close</button
+        ><button id="download-handoff" hidden>Download</button
         ><button id="copy-handoff" class="primary">Copy request</button>
       </div>
     </dialog>

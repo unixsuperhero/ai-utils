@@ -1,6 +1,6 @@
 ---
 name: mgmt
-description: Itemize user-specified material into an autosaved interactive checklist, then execute only the actions the user selected. Use for reviewing rules, notes, files, tasks, configuration, or other collections before making changes.
+description: Itemize user-specified material into an autosaved interactive checklist with optional per-item recommendations, export the decisions as one block to paste back, then execute only the actions the user selected. Use for reviewing rules, notes, files, tasks, configuration, open questions in plans, or other collections before making changes, or when the owner wants a checklist or Q&A page to answer.
 ---
 
 # Itemize → review → apply
@@ -30,6 +30,15 @@ This is a two-phase, assistant-backed tool. The browser workspace and optional t
   ]
 }
 ```
+
+Optional fields, all additive (older inventories and sessions keep working):
+
+- Inventory `actions`: the outcome buttons, e.g. `["yes", "no", "later"]`; default Remove/Keep/Revise. Keys 1–9 pick them. A custom action is always possible.
+- Inventory `kind`, `generated_at`, `origin` (`{"repo", "commit", "dirty"}` from `git rev-parse`): copied into the export header.
+- Item `id`: stable across regenerations (e.g. a hash of path + heading + number). Needed to carry decisions.
+- Item `recommendation` (text) and `recommended_action` (defaults to `default_action`): shown highlighted as "recommended · not confirmed" until the user accepts it (`a` or the Accept button) or picks something else. Recommending is not deciding: an unaccepted recommendation selects nothing.
+
+Regenerating: build a fresh inventory, then `init NEW/session.json inventory.json --carry OLD/session.json`. Decisions carry by `id`; an item whose details or recommendation changed keeps its decision but is flagged "context changed" until the user touches it.
 
 5. Create the persistent session, then offer browser review (paths must be shell-quoted):
 
@@ -61,6 +70,8 @@ Python 3.9+; standard library only. Keep `mgmt.py`, `mgmt_web.py`, `web.html`, `
 - Actions save immediately; text saves after a short typing pause. Navigation waits for unsaved changes. Check the save indicator before closing.
 - Failed saves retain the draft in the page. Retry after resolving the error; for a stale revision, copy any draft you want to keep, then deliberately reload the saved version. Drafts are not durable until the save indicator confirms success.
 - Active/completed items remain locked. The browser and CLI share the same files and locks; close a terminal `review` before editing that session in the browser.
+- Keys: `j`/`k` item, `1`–`9` action, `a` accept the recommendation, `u` next undecided, `i` note, `Esc` leave a field, `e` export.
+- Copy export (or `mgmt.py export SESSION`) gives one Markdown block with a fenced JSON payload (`format: mgmt-export/1`): header with kind, generation time and source commit; "Read these" (differs from the recommendation, has a note, or context changed); "Accept the recommendation (skim)"; then the JSON with each decided item's `number`, `id`, `source`, `action`, `recommended_action`, `accepted_recommendation`, `note`, `context_changed`, plus `undecided`. Download saves it as a file.
 - Copy handoff prepares an assistant request listing sessions with unfinished decisions. Copying it neither authorizes nor executes changes; send it to the assistant when ready.
 
 Source text is displayed as text, never executable HTML. Requests require the server's page token; writes reject conflicting revisions rather than overwriting another tab's decisions. No external assets, cloud storage, or source-execution endpoints.
@@ -84,6 +95,14 @@ python3 ~/hub/ai/utils/mgmt/mgmt.py result SESSION NUMBER failed 'Exact failure,
 
 Independent file edits may be grouped to avoid line-shift problems, but record an accurate per-item result. A no-change `keep` action can be completed with a receipt saying it was intentionally preserved. If stopping early, record untouched queued items as failed with `Not executed` rather than leaving them appearing active. If an execution is still in progress, do not unlock it.
 6. Report completed items and failures accurately, including the session path for resuming. Review allows pending/failed decisions to be changed; active/completed decisions are locked. Use a new session for subsequent changes to completed items.
+
+### Receiving an export
+
+When the user pastes an export, parse the fenced JSON (not the prose). Items with `accepted_recommendation: true` take the recommendation as written; read the rest in full. `undecided` items stay untouched. If the session file is at hand, prefer `status SESSION` and the normal Apply flow below; the export is for when only the text reaches you.
+
+## Kinds with a helper
+
+- **owner-questions**: open questions in a plans folder. `python3 -I "$HOME/hub/ai/utils/mgmt/inventories/owner_questions.py" scan [--root ~/hub/o-plans] [--include-answered]` scans `*.md` and `plans/*.md` for "Owner questions" / "Open questions" / "Questions for the owner" sections, splits each numbered item into question and "Recommended:" text, skips questions already answered (heading says answered, an "Owner answers" subheading, or a numbered "Owner decisions" item with the same number), and writes `~/.local/state/mgmt/owner-questions-<date>/inventory.json` with actions yes/no/later/moot. To apply: `owner_questions.py decisions SESSION` prints a `## Owner decisions (<date>)` section per plan (numbered like the questions, `later` kept as still open); insert each above that plan's questions section, then record each item's result with `mgmt.py result`.
 
 ## Terminal commands
 

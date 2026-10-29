@@ -77,7 +77,107 @@ def change(data, number, action=None, note=None):
         item['note'] = note
     item['status'] = 'pending'
     item.pop('result', None)
+    item.pop('context_changed', None)
     data['updated_at'] = now()
+
+
+ITEM_FIELDS = ('title', 'source', 'details')
+OPTIONAL_ITEM_FIELDS = ('id', 'recommendation', 'recommended_action')
+OPTIONAL_FIELDS = ('kind', 'generated_at', 'origin', 'actions')
+
+
+def build_session(data, previous=None):
+    """Validate an inventory and return a new session; carry decisions from previous by item id."""
+    for field in ('title', 'scope', 'default_action'):
+        if not isinstance(data.get(field), str) or not data[field].strip():
+            raise ValueError(f'Inventory requires a nonempty {field}')
+    if not isinstance(data.get('items'), list) or not data['items']:
+        raise ValueError('Inventory requires a nonempty items array')
+    actions = data.get('actions')
+    if actions is not None and (not isinstance(actions, list) or not actions
+                                or not all(isinstance(a, str) and a.strip() for a in actions)):
+        raise ValueError('Inventory actions must be a nonempty list of nonempty strings')
+    if 'origin' in data and not isinstance(data['origin'], dict):
+        raise ValueError('Inventory origin must be an object')
+    carried = {}
+    for old in (previous or {}).get('items', []):
+        if old.get('id'):
+            carried[old['id']] = old
+    items, seen = [], set()
+    for item in data['items']:
+        for field in ITEM_FIELDS:
+            if not isinstance(item.get(field), str) or not item[field].strip():
+                raise ValueError(f'Every item requires a nonempty {field}')
+        for field in OPTIONAL_ITEM_FIELDS:
+            if field in item and not (isinstance(item[field], str) and item[field].strip()):
+                raise ValueError(f'Item {field} must be a nonempty string when present')
+        if item.get('id'):
+            if item['id'] in seen:
+                raise ValueError('Duplicate item id: ' + item['id'])
+            seen.add(item['id'])
+        entry = {key: item[key] for key in ITEM_FIELDS + OPTIONAL_ITEM_FIELDS if key in item}
+        if entry.get('recommendation') and not entry.get('recommended_action'):
+            entry['recommended_action'] = data['default_action']
+        entry.update(action='', note='', status='pending')
+        old = carried.get(entry.get('id'))
+        if old and (old.get('action') or old.get('note')) and old.get('status') != 'done':
+            entry.update(action=old.get('action', ''), note=old.get('note', ''))
+            if (old.get('details'), old.get('recommendation')) != (entry['details'], entry.get('recommendation')):
+                entry['context_changed'] = True
+        items.append(entry)
+    session = {key: data[key] for key in ('title', 'scope', 'default_action')}
+    session.update({key: data[key] for key in OPTIONAL_FIELDS if key in data})
+    session.update(version=1, items=items, created_at=now(), updated_at=now())
+    return session
+
+
+def accepted(item):
+    """True when the decision just takes the item's recommendation, with nothing to read."""
+    return bool(item.get('recommended_action')) and item['action'] == item['recommended_action'] \
+        and not item['note'].strip() and not item.get('context_changed')
+
+
+def export(data, path):
+    """One Markdown block with a fenced JSON payload, to paste back to an agent."""
+    decided = [dict(number=n, **i) for n, i in enumerate(data['items'], 1) if i['action']]
+    easy = [i for i in decided if accepted(i)]
+    read = [i for i in decided if not accepted(i)]
+    undecided = [dict(number=n, id=i.get('id'), source=i['source'], note=i['note'])
+                 for n, i in enumerate(data['items'], 1) if not i['action']]
+    origin = data.get('origin') or {}
+    stamp = now()
+    payload = dict(
+        format='mgmt-export/1', session=str(path), title=data['title'], kind=data.get('kind', ''),
+        generated_at=data.get('generated_at', data.get('created_at', '')), exported_at=stamp, origin=origin,
+        counts=dict(items=len(data['items']), decided=len(decided), accepted=len(easy), undecided=len(undecided)),
+        items=[dict(number=i['number'], id=i.get('id'), source=i['source'], title=i['title'], action=i['action'],
+                    recommended_action=i.get('recommended_action'), accepted_recommendation=accepted(i),
+                    note=i['note'], status=i['status'], context_changed=bool(i.get('context_changed')))
+               for i in decided],
+        undecided=undecided)
+
+    def line(i):
+        return f"- {i['number']}. `{i.get('id') or '-'}` {i['source']} — {i['title']}"
+    out = ['# mgmt export: ' + data['title'], '',
+           '- Session: ' + str(path),
+           f"- Kind: {data.get('kind') or '-'} · generated {payload['generated_at']} · exported {stamp}"]
+    if origin:
+        out.append(f"- Source: {origin.get('repo', '-')} @ {origin.get('commit', '-')}"
+                   + (' (uncommitted changes)' if origin.get('dirty') else ''))
+    out.append(f"- Decided {len(decided)} of {len(data['items'])}: {len(easy)} just accept the recommendation, "
+               f"{len(read)} need reading; {len(undecided)} undecided (left untouched)")
+    if read:
+        out += ['', '## Read these']
+        for i in read:
+            out.append(line(i))
+            rec = f" (recommended: {i['recommended_action']})" if i.get('recommended_action') else ''
+            out.append(f"  - Action: {i['action']}{rec}" + (' — CONTEXT CHANGED since decided' if i.get('context_changed') else ''))
+            if i['note'].strip():
+                out.append('  - Note: ' + ' / '.join(i['note'].strip().splitlines()))
+    if easy:
+        out += ['', '## Accept the recommendation (skim)'] + [line(i) for i in easy]
+    out += ['', '```json', json.dumps(payload, indent=2, ensure_ascii=False), '```', '']
+    return '\n'.join(out)
 
 
 def review(path, data):
@@ -132,7 +232,9 @@ def main():
     init = sub.add_parser('init', help='Create a session from an assistant-generated inventory JSON')
     init.add_argument('session', type=Path)
     init.add_argument('inventory', type=Path)
-    for name in ('review', 'status', 'apply'):
+    init.add_argument('--carry', type=Path, metavar='OLD_SESSION',
+                      help='Copy decisions from an earlier session for items with the same id')
+    for name in ('review', 'status', 'apply', 'export'):
         command = sub.add_parser(name)
         command.add_argument('session', type=Path)
     result = sub.add_parser('result', help='Record an executor result; never executes actions itself')
@@ -157,23 +259,14 @@ def main():
         if args.command == 'init':
             if path.exists():
                 raise ValueError('Session already exists; refusing to overwrite choices')
-            data = json.loads(args.inventory.read_text())
-            for field in ('title', 'scope', 'default_action'):
-                if not isinstance(data.get(field), str) or not data[field].strip():
-                    raise ValueError(f'Inventory requires a nonempty {field}')
-            if not isinstance(data.get('items'), list) or not data['items']:
-                raise ValueError('Inventory requires a nonempty items array')
-            items = []
-            for item in data['items']:
-                for field in ('title', 'source', 'details'):
-                    if not isinstance(item.get(field), str) or not item[field].strip():
-                        raise ValueError(f'Every item requires a nonempty {field}')
-                items.append({key: item[key] for key in ('title', 'source', 'details')})
-                items[-1].update(action='', note='', status='pending')
-            data = {key: data[key] for key in ('title', 'scope', 'default_action')}
-            data.update(version=1, items=items, created_at=now(), updated_at=now())
+            previous = load(args.carry.expanduser().resolve()) if args.carry else None
+            data = build_session(json.loads(args.inventory.read_text()), previous)
             save(path, data)
             print('Created ' + str(path))
+            if previous:
+                kept = sum(bool(i['action'] or i['note']) for i in data['items'])
+                changed = sum(bool(i.get('context_changed')) for i in data['items'])
+                print(f'Carried {kept} decisions by id; {changed} need a recheck (context changed)')
             print('Review: ' + shlex.join([sys.executable, str(Path(__file__).resolve()), 'serve', str(path)]))
             return
         data = load(path)
@@ -181,6 +274,8 @@ def main():
             review(path, data)
         elif args.command == 'status':
             print(json.dumps(data, indent=2, ensure_ascii=False))
+        elif args.command == 'export':
+            print(export(data, path), end='')
         elif args.command == 'apply':
             if any(item['status'] == 'applying' for item in data['items']):
                 raise ValueError('Unresolved applying items: inspect actual effects and record results before retrying')
