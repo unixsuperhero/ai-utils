@@ -160,6 +160,25 @@ class RecommendationExportTest(unittest.TestCase):
             self.assertEqual(carried['q3']['action'], '')
             self.assertFalse(json.loads(self.run_tool('export', second).stdout.split('```json')[1].split('```')[0])['items'][0]['accepted_recommendation'])
 
+            # Regenerated with nothing changed before the owner looks: still flagged; an owner change clears it.
+            third = root / 'three' / 'session.json'
+            self.run_tool('init', third, inventory, '--carry', second)
+            again = {i['id']: i for i in json.loads(third.read_text())['items']}
+            self.assertEqual((again['q1']['action'], again['q1'].get('context_changed')), ('yes', True))
+            self.assertIsNone(again['q2'].get('context_changed'))
+            sys.path.insert(0, str(self.tool.parent))
+            try:
+                import mgmt
+            finally:
+                sys.path.pop(0)
+            data = mgmt.load(third)
+            mgmt.change(data, [i['id'] for i in data['items']].index('q1') + 1, note='Fine.')
+            mgmt.save(third, data)
+            fourth = root / 'four' / 'session.json'
+            self.run_tool('init', fourth, inventory, '--carry', third)
+            cleared = {i['id']: i for i in json.loads(fourth.read_text())['items']}
+            self.assertEqual((cleared['q1']['action'], cleared['q1'].get('context_changed')), ('yes', None))
+
             for bad in (dict(base, items=[items[0], items[0]]), dict(base, actions=[], items=items),
                         dict(base, items=[dict(items[0], recommendation='')])):
                 inventory.write_text(json.dumps(bad))

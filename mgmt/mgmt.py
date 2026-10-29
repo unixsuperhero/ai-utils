@@ -194,7 +194,9 @@ def build_session(data, previous=None):
                     asked = {m['text'].strip() for m in entry['thread'] if m['role'] == 'owner'}
                     if entry['note'].strip() in asked:
                         entry['note'] = ''
-                if (old.get('details'), old.get('recommendation')) != (entry['details'], entry.get('recommendation')):
+                # Changed text flags the decision; a flag the owner has not cleared (by touching the item) stays.
+                if old.get('context_changed') or \
+                        (old.get('details'), old.get('recommendation')) != (entry['details'], entry.get('recommendation')):
                     entry['context_changed'] = True
             # A reply the owner has not read yet (no change since the flag was set) stays flagged.
             if replied or old.get('new_reply'):
