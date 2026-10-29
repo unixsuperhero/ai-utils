@@ -15,6 +15,9 @@
         ><span>review desk<small>LOCAL WORKSPACE</small></span></a
       >
       <span class="safety">Decide here. Apply with your assistant.</span>
+      <button id="view-toggle" disabled title="Switch between the compact list and one item at a time (v)">
+        One at a time
+      </button>
       <button id="export" disabled title="Markdown with fenced JSON to paste back to an agent (e)">
         Copy export
       </button>
@@ -63,7 +66,37 @@
           <p id="session-path"></p>
           <p id="scope"></p>
         </details>
-        <div class="review-grid">
+        <section id="compact" class="compact" aria-label="All items by topic" hidden>
+          <div class="compact-tools">
+            <input
+              id="c-search"
+              type="search"
+              placeholder="Search titles, text, notes…"
+              autocomplete="off"
+              aria-label="Find an item"
+            /><select id="c-filter" aria-label="Show">
+              <option value="all">All items</option>
+              <option value="unselected">Undecided</option>
+              <option value="changed">Changed or new reply</option>
+              <option value="asked">Asked</option>
+              <option value="selected">With decisions</option>
+              <option value="locked">Locked</option></select
+            ><span id="c-count" class="c-count"></span
+            ><span class="save-row compact-save"
+              ><span data-save-state role="status" aria-live="polite">Saved</span
+              ><button class="retry" hidden>Retry save</button
+              ><button class="reload" hidden>Reload saved version</button></span
+            >
+          </div>
+          <div id="topics" class="topics"></div>
+          <p class="field-help keys">
+            Keys: <kbd>j</kbd>/<kbd>k</kbd> row · <kbd>1</kbd>–<kbd>9</kbd> pick ·
+            <kbd>a</kbd> accept · <kbd>?</kbd> ask · <kbd>u</kbd> next undecided ·
+            <kbd>n</kbd> notes · <kbd>x</kbd> context · <kbd>z</kbd> fold topic ·
+            <kbd>v</kbd> one at a time · <kbd>e</kbd> export
+          </p>
+        </section>
+        <div id="single" class="review-grid" hidden>
           <section class="item-pane" aria-label="Review items">
             <div class="list-tools">
               <label class="search-label" for="search">Find an item</label
@@ -79,6 +112,7 @@
                   <option value="all">All items</option>
                   <option value="selected">With decisions</option>
                   <option value="unselected">Undecided</option>
+                  <option value="changed">Changed or new reply</option>
                   <option value="asked">Asked</option>
                   <option value="locked">Locked</option></select
                 ><span id="visible-count"></span>
@@ -160,14 +194,14 @@
                   Keys: <kbd>j</kbd>/<kbd>k</kbd> item · <kbd>1</kbd>–<kbd>9</kbd>
                   action · <kbd>?</kbd> ask the agent · <kbd>a</kbd> accept recommendation · <kbd>u</kbd> next
                   undecided · <kbd>i</kbd> note · <kbd>Esc</kbd> leave a field ·
-                  <kbd>e</kbd> export
+                  <kbd>v</kbd> compact list · <kbd>e</kbd> export
                 </p>
               </fieldset>
               <div class="save-row">
-                <span id="save-state" role="status" aria-live="polite"
+                <span id="save-state" data-save-state role="status" aria-live="polite"
                   >Saved</span
-                ><button id="retry" hidden>Retry save</button
-                ><button id="reload" hidden>Reload saved version</button>
+                ><button id="retry" class="retry" hidden>Retry save</button
+                ><button id="reload" class="reload" hidden>Reload saved version</button>
               </div>
             </article>
           </section>

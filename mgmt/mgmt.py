@@ -83,8 +83,8 @@ def change(data, number, action=None, note=None):
 
 
 ITEM_FIELDS = ('title', 'source', 'details')
-OPTIONAL_ITEM_FIELDS = ('id', 'recommendation', 'recommended_action')
-OPTIONAL_FIELDS = ('kind', 'generated_at', 'origin', 'actions', 'ask')
+OPTIONAL_ITEM_FIELDS = ('id', 'recommendation', 'recommended_action', 'group')
+OPTIONAL_FIELDS = ('kind', 'generated_at', 'origin', 'actions', 'ask', 'groups')
 ASK = 'ask'
 ROLES = ('owner', 'agent')
 
@@ -101,6 +101,23 @@ def asking(data, item):
 
 def is_decided(data, item):
     return bool(item.get('action')) and not asking(data, item)
+
+
+def group_of(item):
+    """The item's topic: its `group`, else its source file without a trailing :line."""
+    if item.get('group'):
+        return item['group']
+    head, sep, tail = item['source'].rpartition(':')
+    return head if sep and head and tail.replace('-', '').isdigit() else item['source']
+
+
+def group_order(data):
+    """Topics in display order: the inventory's `groups` first, then the rest as they first appear."""
+    order = list(dict.fromkeys(data.get('groups') or []))
+    for item in data['items']:
+        if group_of(item) not in order:
+            order.append(group_of(item))
+    return order
 
 
 def check_thread(thread):
@@ -137,6 +154,10 @@ def build_session(data, previous=None):
         raise ValueError('Inventory origin must be an object')
     if 'ask' in data and not isinstance(data['ask'], bool):
         raise ValueError('Inventory ask must be true or false')
+    groups = data.get('groups')
+    if groups is not None and (not isinstance(groups, list)
+                               or not all(isinstance(g, str) and g.strip() for g in groups)):
+        raise ValueError('Inventory groups must be a list of nonempty strings')
     carried = {}
     for old in (previous or {}).get('items', []):
         if old.get('id'):
@@ -259,11 +280,12 @@ def reply(path, data, ref, text, recommendation=None, recommended_action=None, q
 def export(data, path):
     """One Markdown block with a fenced JSON payload, to paste back to an agent."""
     numbered = [dict(number=n, **i) for n, i in enumerate(data['items'], 1)]
+    order = group_order(data)
     asked = [i for i in numbered if asking(data, i)]
     decided = [i for i in numbered if is_decided(data, i)]
     easy = [i for i in decided if accepted(i)]
     read = [i for i in decided if not accepted(i)]
-    undecided = [dict(number=i['number'], id=i.get('id'), source=i['source'], note=i['note'],
+    undecided = [dict(number=i['number'], id=i.get('id'), group=group_of(i), source=i['source'], note=i['note'],
                       new_reply=bool(i.get('new_reply')))
                  for i in numbered if not i['action']]
     origin = data.get('origin') or {}
@@ -273,9 +295,11 @@ def export(data, path):
         generated_at=data.get('generated_at', data.get('created_at', '')), exported_at=stamp, origin=origin,
         counts=dict(items=len(data['items']), decided=len(decided), accepted=len(easy), asked=len(asked),
                     undecided=len(undecided)),
-        questions=[dict(number=i['number'], id=i.get('id'), source=i['source'], title=i['title'],
+        groups=order,
+        questions=[dict(number=i['number'], id=i.get('id'), group=group_of(i), source=i['source'], title=i['title'],
                         question=i['note'], thread=i.get('thread', [])) for i in asked],
-        items=[dict(number=i['number'], id=i.get('id'), source=i['source'], title=i['title'], action=i['action'],
+        items=[dict(number=i['number'], id=i.get('id'), group=group_of(i), source=i['source'], title=i['title'],
+                    action=i['action'],
                     recommended_action=i.get('recommended_action'), accepted_recommendation=accepted(i),
                     note=i['note'], status=i['status'], context_changed=bool(i.get('context_changed')),
                     new_reply=bool(i.get('new_reply')))
@@ -284,6 +308,32 @@ def export(data, path):
 
     def line(i):
         return f"- {i['number']}. `{i.get('id') or '-'}` {i['source']} — {i['title']}"
+
+    def by_topic(rows, entry):
+        """Lines for rows under a ### heading per topic, topics in display order."""
+        lines = []
+        for topic in order:
+            members = [i for i in rows if group_of(i) == topic]
+            if members:
+                lines += ['', '### ' + topic]
+                for i in members:
+                    lines += entry(i)
+        return lines
+
+    def question(i):
+        text = ' / '.join(i['note'].strip().splitlines()) or '(no question text; ask what they need)'
+        lines = [line(i), '  - Question: ' + text]
+        if i.get('thread'):
+            lines.append(f"  - Earlier in this thread: {len(i['thread'])} messages (see the JSON)")
+        return lines
+
+    def reading(i):
+        rec = f" (recommended: {i['recommended_action']})" if i.get('recommended_action') else ''
+        lines = [line(i), f"  - Action: {i['action']}{rec}"
+                 + (' — CONTEXT CHANGED since decided' if i.get('context_changed') else '')]
+        if i['note'].strip():
+            lines.append('  - Note: ' + ' / '.join(i['note'].strip().splitlines()))
+        return lines
     out = ['# mgmt export: ' + data['title'], '',
            '- Session: ' + str(path),
            f"- Kind: {data.get('kind') or '-'} · generated {payload['generated_at']} · exported {stamp}"]
@@ -295,22 +345,11 @@ def export(data, path):
     if asked:
         out += ['', '## Questions for you',
                 'Open, not decided: the owner asked before deciding. Answer each with `mgmt.py reply`, then `init --carry`.']
-        for i in asked:
-            out.append(line(i))
-            question = ' / '.join(i['note'].strip().splitlines()) or '(no question text; ask what they need)'
-            out.append('  - Question: ' + question)
-            if i.get('thread'):
-                out.append(f"  - Earlier in this thread: {len(i['thread'])} messages (see the JSON)")
+        out += by_topic(asked, question)
     if read:
-        out += ['', '## Read these']
-        for i in read:
-            out.append(line(i))
-            rec = f" (recommended: {i['recommended_action']})" if i.get('recommended_action') else ''
-            out.append(f"  - Action: {i['action']}{rec}" + (' — CONTEXT CHANGED since decided' if i.get('context_changed') else ''))
-            if i['note'].strip():
-                out.append('  - Note: ' + ' / '.join(i['note'].strip().splitlines()))
+        out += ['', '## Read these'] + by_topic(read, reading)
     if easy:
-        out += ['', '## Accept the recommendation (skim)'] + [line(i) for i in easy]
+        out += ['', '## Accept the recommendation (skim)'] + by_topic(easy, lambda i: [line(i)])
     out += ['', '```json', json.dumps(payload, indent=2, ensure_ascii=False), '```', '']
     return '\n'.join(out)
 

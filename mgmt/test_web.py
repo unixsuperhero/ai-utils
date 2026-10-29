@@ -183,10 +183,12 @@ class RecommendationExportTest(unittest.TestCase):
             data = json.loads((out / 'inventory.json').read_text())
             self.assertEqual(data['actions'], ['yes', 'no', 'later', 'moot'])
             got = [(i['title'], i.get('recommendation')) for i in data['items']]
-            self.assertEqual(got, [('done.md #2: Still open?', None),
-                                   ('open.md #1: Tab order.', 'the app first.'),
-                                   ('open.md #2: Title?', '`ochazuke`. It matches the palette.')])
+            self.assertEqual(got, [('#2 Still open?', None),
+                                   ('#1 Tab order. Which first?', 'the app first.'),
+                                   ('#2 Title?', '`ochazuke`. It matches the palette.')])
             self.assertEqual(len({i['id'] for i in data['items']}), 3)
+            self.assertEqual([i['group'] for i in data['items']], ['Done', 'Open', 'Open'])
+            self.assertEqual(data['groups'], ['Done', 'Open'])
             session = root / 'session' / 'session.json'
             self.run_tool('init', session, out / 'inventory.json')
             saved = json.loads(session.read_text())
@@ -197,6 +199,86 @@ class RecommendationExportTest(unittest.TestCase):
             self.assertIn('## Owner decisions (2026-10-30)', sections)
             self.assertIn('1. **Tab order.** The app first.', sections)
             self.assertNotIn('Still open', sections)
+
+    def test_owner_question_group_names(self):
+        sys.path.insert(0, str(Path(__file__).with_name('inventories')))
+        try:
+            import owner_questions
+        finally:
+            sys.path.pop(0)
+        self.assertEqual([owner_questions.group_name(r) for r in (
+            'plans/ochazuke-settings-layout.md', 'plans/generated-docs.md', 'handoff-2026-10-25.md', 'plans/ochazuke.md')],
+            ['Settings layout', 'Generated docs', 'Handoff 2026-10-25', 'Ochazuke'])
+
+
+class GroupTest(unittest.TestCase):
+    """Topics: an item's group (else its source file), the inventory's groups order, the export by topic."""
+    tool = Path(__file__).with_name('mgmt.py')
+
+    def run_tool(self, *args, check=True):
+        return subprocess.run([sys.executable, str(self.tool), *map(str, args)], capture_output=True, text=True, timeout=10, check=check)
+
+    def test_groups_carry_and_order_the_export(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inventory = root / 'inventory.json'
+            base = dict(title='Questions', scope='fixture', default_action='yes', actions=['yes', 'no'],
+                        groups=['Builders', 'Settings layout'])
+            items = [
+                dict(id='a', title='Tab order?', source='/p/settings.md:3', details='1', group='Settings layout',
+                     recommendation='Yes.'),
+                dict(id='b', title='Forms?', source='/p/builders.md:9', details='2', group='Builders'),
+                dict(id='c', title='Loose one', source='/p/loose.md:12', details='3'),
+                dict(id='d', title='Rows?', source='/p/builders.md:10', details='4', group='Builders'),
+            ]
+            inventory.write_text(json.dumps(dict(base, items=items)))
+            first = root / 'one' / 'session.json'
+            self.run_tool('init', first, inventory)
+            data = json.loads(first.read_text())
+            self.assertEqual(data['groups'], ['Builders', 'Settings layout'])
+            self.assertEqual([i.get('group') for i in data['items']], ['Settings layout', 'Builders', None, 'Builders'])
+            data['items'][0]['action'] = 'yes'
+            data['items'][1].update(action='no', note='Not yet.')
+            data['items'][3].update(action='ask', note='Which rows?')
+            first.write_text(json.dumps(data))
+            exported = self.run_tool('export', first).stdout
+            payload = json.loads(re.search(r'```json\n(.*)\n```', exported, re.S).group(1))
+            self.assertEqual(payload['format'], 'mgmt-export/1')
+            self.assertEqual(payload['groups'], ['Builders', 'Settings layout', '/p/loose.md'])
+            self.assertEqual([(i['id'], i['group']) for i in payload['items']], [('a', 'Settings layout'), ('b', 'Builders')])
+            self.assertEqual([(q['id'], q['group']) for q in payload['questions']], [('d', 'Builders')])
+            self.assertEqual([(u['id'], u['group']) for u in payload['undecided']], [('c', '/p/loose.md')])
+            prose = exported.split('```json')[0]
+            questions, read, easy = (prose.split(h)[1].split('\n## ')[0] for h in
+                                     ('## Questions for you', '## Read these', '## Accept the recommendation'))
+            self.assertIn('### Builders\n- 4.', questions)
+            self.assertIn('### Builders\n- 2.', read)
+            self.assertIn('### Settings layout\n- 1.', easy)
+
+            # Groups carry into the next round with the decisions; a regroup is not a context change.
+            items[2]['group'] = 'Loose'
+            inventory.write_text(json.dumps(dict(base, items=items)))
+            second = root / 'two' / 'session.json'
+            self.run_tool('init', second, inventory, '--carry', first)
+            carried = {i['id']: i for i in json.loads(second.read_text())['items']}
+            self.assertEqual(carried['c']['group'], 'Loose')
+            self.assertEqual((carried['b']['action'], carried['b']['note'], carried['b'].get('context_changed')),
+                             ('no', 'Not yet.', None))
+
+            for bad in (dict(base, groups='Builders', items=items), dict(base, groups=[''], items=items),
+                        dict(base, items=[dict(items[0], group='')])):
+                inventory.write_text(json.dumps(bad))
+                self.assertNotEqual(self.run_tool('init', root / 'bad' / 'session.json', inventory, check=False).returncode, 0, bad)
+
+    def test_compact_view_is_the_default(self):
+        html = Path(__file__).with_name('web.html').read_text()
+        script = Path(__file__).with_name('web.js').read_text()
+        self.assertIn('id="compact"', html)
+        self.assertIn('id="single"', html)
+        self.assertIn('id="view-toggle"', html)
+        # Only a stored "single" choice opens one item at a time; anything else is the compact list.
+        self.assertIn('let view = storage(VIEW_KEY) === "single" ? "single" : "compact";', script)
+
 
 class ThreadAskTest(unittest.TestCase):
     """The ask outcome, the read-only thread, and how a reply carries into the next session."""

@@ -12,7 +12,9 @@ answered when its section heading says "answered", the section holds an
 "Owner answers"/"Owner decisions" subheading, or the plan has a numbered
 "Owner decisions" section with an item of the same number. Answered questions are
 left out unless --include-answered. Writes OUT/inventory.json (default
-~/.local/state/mgmt/owner-questions-<date>/).
+~/.local/state/mgmt/owner-questions-<date>/). Each item's group (topic) is the
+plan's short name, from its file name: plans/ochazuke-settings-layout.md is
+"Settings layout".
 
 decisions reads a reviewed mgmt session and prints, per plan, the
 "## Owner decisions (<date>)" section to paste above that plan's questions.
@@ -102,6 +104,19 @@ def split_item(raw):
     return title or question[:160], question, rec
 
 
+def group_name(rel):
+    """A plan's short name from its file: plans/ochazuke-settings-layout.md -> "Settings layout"."""
+    stem = pathlib.PurePosixPath(rel).stem.removeprefix('ochazuke-') or pathlib.PurePosixPath(rel).stem
+    name = re.sub(r'(?<!\d)-|-(?!\d)', ' ', stem).strip()
+    return name[:1].upper() + name[1:]
+
+
+def item_title(number, question):
+    """The question in full (bold kept as plain text), led by its number in the plan."""
+    text = f"#{number} " + question.replace('**', '')
+    return text if len(text) <= 240 else text[:237].rstrip() + '...'
+
+
 def git(root, *args):
     try:
         return subprocess.run(['git', '-C', str(root), *args], capture_output=True, text=True,
@@ -168,7 +183,7 @@ def inventory(root, questions, include_answered):
                         + '); check whether it already settles this question.']
         if q['answered']:
             details += ['', 'Already answered: ' + q['answered']]
-        item = dict(id=q['id'], title=f"{q['rel'].removeprefix('plans/')} #{q['number']}: {q['title']}",
+        item = dict(id=q['id'], title=item_title(q['number'], q['question']), group=group_name(q['rel']),
                     source=f"{q['path']}:{q['line']}", details='\n'.join(details))
         if q['recommendation']:
             item.update(recommendation=q['recommendation'], recommended_action='yes')
@@ -179,6 +194,7 @@ def inventory(root, questions, include_answered):
               + ('' if include_answered else '; questions already answered in their plan are left out')
               + '. Applying writes an "Owner decisions (date)" section into each plan.',
         default_action='yes', actions=ACTIONS, kind='owner-questions',
+        groups=list(dict.fromkeys(i['group'] for i in items)),
         generated_at=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
         origin=dict(repo=git(root, 'rev-parse', '--show-toplevel'), commit=git(root, 'rev-parse', 'HEAD'),
                     dirty=bool(status)),
