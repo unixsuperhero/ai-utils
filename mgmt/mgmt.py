@@ -196,7 +196,8 @@ def build_session(data, previous=None):
                         entry['note'] = ''
                 if (old.get('details'), old.get('recommendation')) != (entry['details'], entry.get('recommendation')):
                     entry['context_changed'] = True
-            if replied:
+            # A reply the owner has not read yet (no change since the flag was set) stays flagged.
+            if replied or old.get('new_reply'):
                 entry.update(context_changed=True, new_reply=True)
         items.append(entry)
     session = {key: data[key] for key in ('title', 'scope', 'default_action')}

@@ -378,12 +378,38 @@ class ThreadAskTest(unittest.TestCase):
             self.assertEqual(self.payload(self.run_tool('export', second).stdout)['undecided'][0]['new_reply'], True)
             self.assertNotEqual(self.run_tool('reply', first, 'q3', '--text', 'x', check=False).returncode, 0)
 
-            # A rescan that knows nothing of threads keeps them, and nothing is a new reply.
+            # A rescan that knows nothing of threads keeps them; an unread reply stays flagged, nothing else is new.
             third = root / 'round-r3' / 'session.json'
             self.run_tool('init', third, inventory, '--carry', second)
             rescanned = {i['id']: i for i in json.loads(third.read_text())['items']}
             self.assertEqual(len(rescanned['q1']['thread']), 3)
-            self.assertNotIn('new_reply', rescanned['q1'])
+            self.assertTrue(rescanned['q1']['new_reply'] and rescanned['q1']['context_changed'])
+            self.assertNotIn('new_reply', rescanned['q2'])
+            self.assertNotIn('new_reply', rescanned['q3'])
+
+            # Regenerated again before the owner looks: still flagged.
+            fourth = root / 'round-r4' / 'session.json'
+            self.run_tool('init', fourth, inventory, '--carry', third)
+            again = {i['id']: i for i in json.loads(fourth.read_text())['items']}
+            self.assertTrue(again['q1']['new_reply'] and again['q1']['context_changed'])
+
+            # Once the owner touches it the flag clears, and the next regeneration leaves it clear.
+            sys.path.insert(0, str(self.tool.parent))
+            try:
+                import mgmt
+            finally:
+                sys.path.pop(0)
+            data = mgmt.load(fourth)
+            number = [i['id'] for i in data['items']].index('q1') + 1
+            mgmt.change(data, number, action='yes')
+            mgmt.save(fourth, data)
+            touched = {i['id']: i for i in json.loads(fourth.read_text())['items']}
+            self.assertNotIn('new_reply', touched['q1'])
+            fifth = root / 'round-r5' / 'session.json'
+            self.run_tool('init', fifth, inventory, '--carry', fourth)
+            cleared = {i['id']: i for i in json.loads(fifth.read_text())['items']}
+            self.assertNotIn('new_reply', cleared['q1'])
+            self.assertNotIn('context_changed', cleared['q1'])
 
             for bad in (dict(base, ask='no', items=items),
                         dict(base, items=[dict(items[0], thread=[dict(role='bot', text='hi')])]),
