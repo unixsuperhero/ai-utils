@@ -545,8 +545,21 @@ function toggleNotes(n, open = !notesOpen.has(n), focus = open) {
   else notesOpen.delete(n);
   updateRow(n);
   const area = rowOf(n)?.querySelector("textarea");
-  if (focus && area) area.focus();
-  else if (!open && document.activeElement === area) area.blur();
+  if (focus && area) {
+    area.focus({ preventScroll: true });
+    area.closest(".row").scrollIntoView({ block: "nearest" });
+  } else if (!open && document.activeElement === area) area.blur();
+}
+// Ready the item's note box for typing: unfold its topic, open the note, focus it and scroll it into view.
+function focusNote(n = number) {
+  if (view === "compact") {
+    const value = valueOf(n);
+    if (value && folded.has(groupOf(value))) toggleFold(groupOf(value));
+    toggleNotes(n, true);
+  } else {
+    $("note").focus({ preventScroll: true });
+    $("note").scrollIntoView({ block: "nearest" });
+  }
 }
 function toggleContext(n) {
   if (contextOpen.has(n)) contextOpen.delete(n);
@@ -573,8 +586,10 @@ $("topics").addEventListener("click", (event) => {
   const n = Number(row.dataset.number);
   if (n !== number) focusRow(n);
   const chip = event.target.closest("[data-action]");
-  if (chip && !chip.disabled) setDraft(n, { action: chip.dataset.action }, true);
-  else if (event.target.closest(".why")) toggleContext(n);
+  if (chip && !chip.disabled) {
+    setDraft(n, { action: chip.dataset.action }, true);
+    if (isAsked(valueOf(n))) focusNote(n);
+  } else if (event.target.closest(".why")) toggleContext(n);
 });
 $("topics").addEventListener("change", (event) => {
   if (!event.target.classList.contains("notes-box")) return;
@@ -731,6 +746,7 @@ $("actions").addEventListener("click", (event) => {
   $("custom-action").value = button.dataset.action;
   $("changed-flag").hidden = true;
   setDraft(number, { action: button.dataset.action }, true);
+  if (isAsked(valueOf(number))) focusNote();
 });
 function accept(n = number) {
   const value = valueOf(n);
@@ -859,8 +875,7 @@ document.addEventListener("keydown", (event) => {
   else if (event.key === "z" && value && compact) toggleFold(groupOf(value));
   else if (event.key === "?" && value && askOn() && !isLocked(value)) {
     pick(ASK);
-    if (compact) toggleNotes(number, true);
-    else $("note").focus();
+    focusNote();
   } else if (/^[1-9]$/.test(event.key) && value && !isLocked(value)) {
     const action = actions[Number(event.key) - 1];
     if (action === undefined) return;

@@ -436,6 +436,12 @@ class ThreadAskTest(unittest.TestCase):
                 inventory.write_text(json.dumps(bad))
                 self.assertNotEqual(self.run_tool('init', root / 'bad' / 'session.json', inventory, check=False).returncode, 0, bad)
 
+    def test_ask_focuses_the_note_box(self):
+        script = Path(__file__).with_name('web.js').read_text()
+        # The Ask chip, the Ask button and the ? key all open the note box and put the cursor in it.
+        self.assertEqual(script.count('focusNote('), 4, 'definition plus chip, button and ? key')
+        self.assertIn('if (value && folded.has(groupOf(value))) toggleFold(groupOf(value));', script)
+
     def test_ask_off_is_a_plain_action(self):
         sys.path.insert(0, str(self.tool.parent))
         try:
