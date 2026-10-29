@@ -190,8 +190,8 @@ def decisions(session, root, date):
     known = {q['id']: q for q in scan(root, include_answered=True)}
     by_plan, missing = {}, []
     for item in data['items']:
-        if not item['action']:
-            continue
+        if not item['action'] or (item['action'] == 'ask' and data.get('ask', True) is not False):
+            continue  # undecided, or asked and still waiting for the agent's answer
         q = known.get(item.get('id'))
         if not q:
             missing.append(item.get('id') or item['title'])

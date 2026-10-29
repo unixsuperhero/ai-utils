@@ -11,8 +11,20 @@ let timer,
   navigating = false,
   noticeTimer;
 const DEFAULT_ACTIONS = ["remove", "keep", "revise"];
+const ASK = "ask";
+const THREAD_TAIL = 3;
+const NOTE_HELP =
+  "A note alone does not select an action. To request changes, choose an action above.";
+const ASK_HELP =
+  "Asking leaves this item open. Write your question here, export, and paste it to your agent; its answer appears in the conversation after it regenerates.";
 const isLocked = (item) => ["applying", "done"].includes(item.status);
-const actionsFor = () => current?.data.actions || DEFAULT_ACTIONS;
+const askOn = () => current?.data.ask !== false;
+const isAsked = (value) => askOn() && value.action === ASK;
+const isDecided = (value) => Boolean(value.action) && !isAsked(value);
+const actionsFor = () => {
+  const base = current?.data.actions || DEFAULT_ACTIONS;
+  return askOn() && !base.includes(ASK) ? [...base, ASK] : base;
+};
 const label = (action) => action.charAt(0).toUpperCase() + action.slice(1);
 const item = () => current?.data.items[number - 1];
 const dirty = () =>
@@ -53,17 +65,18 @@ function saveStatus(text, error = false) {
 }
 function updateSummary() {
   if (!current) return;
-  const selected = current.data.items.filter((i) => i.action).length;
+  const selected = current.data.items.filter(isDecided).length;
+  const asked = current.data.items.filter(isAsked).length;
   $("session-summary").textContent =
     `${current.data.items.length} items · Select any item. Every decision is reversible until applied.`;
   $("progress").replaceChildren(
     document.createTextNode(`${selected} / ${current.data.items.length}`),
   );
   const caption = document.createElement("small");
-  caption.textContent = "WITH DECISIONS";
+  caption.textContent = asked ? `DECIDED · ${asked} ASKED` : "WITH DECISIONS";
   $("progress").append(caption);
   const entry = catalog.find((s) => s.id === current.id);
-  if (entry) entry.selected = selected;
+  if (entry) Object.assign(entry, { selected, asked });
   renderSessions();
 }
 function renderSessions() {
@@ -80,7 +93,8 @@ function renderSessions() {
     const label = document.createElement("span");
     label.textContent = session.title.replace(/^Znbu outline — /, "");
     const count = document.createElement("small");
-    count.textContent = `${session.selected}/${session.total}`;
+    count.textContent =
+      `${session.selected}/${session.total}` + (session.asked ? ` · ${session.asked}?` : "");
     button.append(label, count);
     button.addEventListener("click", () =>
       navigate(() => openSession(session.id)),
@@ -101,8 +115,9 @@ function renderItems() {
     const value =
       index + 1 === number && draft ? { ...saved, ...draft } : saved;
     if (
-      (filter === "selected" && !value.action) ||
+      (filter === "selected" && !isDecided(value)) ||
       (filter === "unselected" && value.action) ||
+      (filter === "asked" && !isAsked(value)) ||
       (filter === "locked" && !isLocked(value))
     )
       return;
@@ -133,14 +148,14 @@ function renderItems() {
     meta.className =
       "item-meta" + (value.action === "remove" ? " remove-label" : "");
     meta.textContent = [
-      value.action ||
+      (isAsked(value) ? "asked · waiting for the agent" : value.action) ||
         (value.recommended_action
           ? `undecided · rec. ${value.recommended_action}`
           : "undecided"),
       value.action && value.action === value.recommended_action
         ? "as recommended"
         : "",
-      value.context_changed ? "context changed" : "",
+      value.new_reply ? "new reply" : value.context_changed ? "context changed" : "",
       value.note ? "note" : "",
       isLocked(value)
         ? value.status + " · locked"
@@ -178,6 +193,10 @@ function renderActionButtons(value) {
     button.textContent = action ? label(action) : "Clear";
     if (action && index < 9) button.title = `Key ${index + 1}`;
     if (action === "remove") button.className = "remove";
+    if (action === ASK && askOn()) {
+      button.className = "ask";
+      button.title = (button.title ? button.title + " or " : "Key ") + "?";
+    }
     if (!action) button.className = "clear";
     if (action && action === value.recommended_action)
       button.classList.add("recommended");
@@ -202,6 +221,43 @@ function renderActions() {
     ? `RECOMMENDED · ${rec.toUpperCase()} · ACCEPTED`
     : `RECOMMENDED · ${(rec || "").toUpperCase()} · NOT CONFIRMED`;
   $("accept").hidden = taken;
+  const asking = askOn() && draft?.action === ASK;
+  $("note-help").textContent = asking ? ASK_HELP : NOTE_HELP;
+  $("note").placeholder = asking
+    ? "Your question for the agent…"
+    : "A reminder for yourself, what to preserve, or instructions for your agent…";
+}
+function stamp(at) {
+  const date = new Date(at);
+  return at && !Number.isNaN(date.getTime())
+    ? date.toLocaleString([], { dateStyle: "medium", timeStyle: "short" })
+    : at || "";
+}
+function renderThread(value, expanded = false) {
+  const thread = value.thread || [];
+  $("thread").hidden = !thread.length;
+  if (!thread.length) return;
+  $("thread-count").textContent =
+    `${thread.length} message${thread.length === 1 ? "" : "s"} · read only`;
+  const hidden = expanded || thread.length <= THREAD_TAIL + 1 ? 0 : thread.length - THREAD_TAIL;
+  $("thread-earlier").hidden = !hidden;
+  $("thread-earlier").textContent = `Show ${hidden} earlier message${hidden === 1 ? "" : "s"}`;
+  $("thread-list").replaceChildren(
+    ...thread.slice(hidden).map((message) => {
+      const entry = document.createElement("li");
+      entry.className = "thread-message " + (message.role === "agent" ? "agent" : "owner");
+      const who = document.createElement("span");
+      who.className = "thread-who";
+      who.textContent = message.role === "agent" ? "Agent" : "You";
+      const when = document.createElement("time");
+      when.textContent = stamp(message.at);
+      if (message.at) when.dateTime = message.at;
+      const text = document.createElement("p");
+      text.textContent = message.text;
+      entry.append(who, when, text);
+      return entry;
+    }),
+  );
 }
 function accept() {
   const value = item();
@@ -234,6 +290,10 @@ function renderEditor() {
   $("note").value = value.note;
   $("decision-fields").disabled = isLocked(value);
   $("changed-flag").hidden = !value.context_changed;
+  $("changed-flag").textContent = value.new_reply
+    ? "New reply from the agent. Read the conversation; any change clears this flag."
+    : "The source text changed since this decision was made. Recheck it; any change clears this flag.";
+  renderThread(value);
   $("recommendation").hidden = !value.recommendation;
   $("recommendation-text").textContent = value.recommendation || "";
   $("accept").disabled = isLocked(value);
@@ -341,6 +401,7 @@ $("actions").addEventListener("click", (event) => {
   changed(true);
 });
 $("accept").addEventListener("click", accept);
+$("thread-earlier").addEventListener("click", () => item() && renderThread(item(), true));
 $("refresh").addEventListener("click", () => navigate(refresh));
 $("retry").addEventListener("click", () => {
   saveError = null;
@@ -426,6 +487,11 @@ document.addEventListener("keydown", (event) => {
   else if (event.key === "a") accept();
   else if (event.key === "e") openExport();
   else if (event.key === "i" && value) $("note").focus();
+  else if (event.key === "?" && value && askOn() && !isLocked(value)) {
+    $("custom-action").value = ASK;
+    changed(true);
+    $("note").focus();
+  }
   else if (/^[1-9]$/.test(event.key) && value && !isLocked(value)) {
     const action = actions[Number(event.key) - 1];
     if (action === undefined) return;

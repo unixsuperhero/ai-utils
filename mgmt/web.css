@@ -474,6 +474,61 @@ legend {
   font-size: 13px;
   white-space: pre-wrap;
 }
+.thread-panel {
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 12px;
+  margin: -12px 0 24px;
+}
+.thread-panel summary {
+  font-size: 11px;
+  font-weight: 600;
+}
+.thread-panel summary span {
+  float: right;
+  font: 9px var(--mono);
+  font-weight: 400;
+  color: var(--muted);
+  padding-top: 3px;
+}
+.thread-earlier {
+  margin: 10px 0 0;
+  font-size: 11px;
+}
+.thread-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.thread-message {
+  padding: 8px 10px;
+  border-left: 3px solid var(--line);
+  background: var(--white);
+  overflow-wrap: anywhere;
+}
+.thread-message.agent {
+  border-left-color: var(--green);
+  background: var(--green-soft);
+}
+.thread-who {
+  font: 600 10px var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.thread-message time {
+  margin-left: 8px;
+  font: 10px var(--mono);
+  color: var(--muted);
+}
+.thread-message p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+.actions button.ask {
+  border-style: dashed;
+}
 .changed-flag {
   padding: 10px 12px;
   border-left: 3px solid var(--red);

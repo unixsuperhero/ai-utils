@@ -32,7 +32,8 @@ def serve(root, port, open_browser, sessions):
                 identity = hashlib.sha256(str(path).encode()).hexdigest()
                 entry = dict(id=identity, title=data['title'], path=str(path),
                              total=len(data['items']),
-                             selected=sum(bool(i['action']) for i in data['items']),
+                             selected=sum(sessions.is_decided(data, i) for i in data['items']),
+                             asked=sum(sessions.asking(data, i) for i in data['items']),
                              done=sum(i['status'] == 'done' for i in data['items']))
                 paths[identity] = path
                 entries.append(entry)

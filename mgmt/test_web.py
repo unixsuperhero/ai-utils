@@ -140,7 +140,8 @@ class RecommendationExportTest(unittest.TestCase):
             payload = json.loads(re.search(r'```json\n(.*)\n```', exported, re.S).group(1))
             self.assertEqual(payload['format'], 'mgmt-export/1')
             self.assertEqual(payload['origin']['commit'], 'abc123')
-            self.assertEqual(payload['counts'], dict(items=3, decided=2, accepted=1, undecided=1))
+            self.assertEqual(payload['counts'], dict(items=3, decided=2, accepted=1, asked=0, undecided=1))
+            self.assertNotIn('## Questions for you', exported)
             self.assertEqual([(i['id'], i['accepted_recommendation']) for i in payload['items']], [('q1', True), ('q2', False)])
             self.assertEqual([u['id'] for u in payload['undecided']], ['q3'])
             self.assertIn('## Read these', exported)
@@ -190,10 +191,136 @@ class RecommendationExportTest(unittest.TestCase):
             self.run_tool('init', session, out / 'inventory.json')
             saved = json.loads(session.read_text())
             saved['items'][1]['action'] = 'yes'
+            saved['items'][0].update(action='ask', note='Is this still needed?')
             session.write_text(json.dumps(saved))
             sections = subprocess.run([sys.executable, '-I', str(script), 'decisions', str(session), '--root', str(root), '--date', '2026-10-30'], capture_output=True, text=True, timeout=10, check=True).stdout
             self.assertIn('## Owner decisions (2026-10-30)', sections)
             self.assertIn('1. **Tab order.** The app first.', sections)
+            self.assertNotIn('Still open', sections)
+
+class ThreadAskTest(unittest.TestCase):
+    """The ask outcome, the read-only thread, and how a reply carries into the next session."""
+    tool = Path(__file__).with_name('mgmt.py')
+
+    def run_tool(self, *args, check=True):
+        return subprocess.run([sys.executable, str(self.tool), *map(str, args)], capture_output=True, text=True, timeout=10, check=check)
+
+    def payload(self, text):
+        return json.loads(re.search(r'```json\n(.*)\n```', text, re.S).group(1))
+
+    def test_ask_export_reply_and_carry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inventory = root / 'inventory.json'
+            earlier = [dict(role='owner', text='Which app?', at='2026-10-28T10:00:00+00:00'),
+                       dict(role='agent', text='The review desk.', at='2026-10-28T10:05:00+00:00')]
+            base = dict(title='Questions', scope='fixture', default_action='yes', actions=['yes', 'no'])
+            items = [
+                dict(id='q1', title='Tabs first?', source='/plan.md:3', details='1. Tabs first?', recommendation='Yes.'),
+                dict(id='q2', title='Rename it?', source='/plan.md:4', details='2. Rename it?'),
+                dict(id='q3', title='Ship it?', source='/plan.md:5', details='3. Ship it?', thread=earlier),
+            ]
+            inventory.write_text(json.dumps(dict(base, items=items)))
+            first = root / 'round' / 'session.json'
+            self.run_tool('init', first, inventory)
+            self.assertEqual(json.loads(first.read_text())['items'][2]['thread'], earlier)
+
+            process = subprocess.Popen([sys.executable, str(self.tool), 'serve', str(first), '--port', '0', '--no-open'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                self.assertTrue(select.select([process.stdout], [], [], 10)[0], 'Server startup timed out')
+                address = urlsplit(process.stdout.readline().decode().removeprefix('Review workspace: ').strip())
+
+                def request(method, path, body=None, headers=None):
+                    connection = http.client.HTTPConnection(address.hostname, address.port, timeout=10)
+                    try:
+                        connection.request(method, path, json.dumps(body) if body is not None else None, headers or {})
+                        response = connection.getresponse()
+                        return response.status, response.read().decode()
+                    finally:
+                        connection.close()
+
+                _, html = request('GET', '/')
+                self.assertIn('id="thread-list"', html)
+                token = re.search(r'name="mgmt-token" content="([^"]+)"', html).group(1)
+                auth = {'X-Mgmt-Token': token, 'Content-Type': 'application/json'}
+                identity = json.loads(request('GET', '/api/sessions', headers=auth)[1])['sessions'][0]['id']
+                envelope = json.loads(request('GET', '/api/session?id=' + identity, headers=auth)[1])
+                self.assertEqual(envelope['data']['items'][2]['thread'], earlier)
+                revision = envelope['revision']
+                for number, action, note in ((1, 'ask', 'Why tabs before the app?'), (2, 'no', ''), (3, 'ask', 'Next week?')):
+                    status, text = request('POST', '/api/session', dict(id=identity, revision=revision, number=number, action=action, note=note), auth)
+                    self.assertEqual(status, 200)
+                    revision = json.loads(text)['revision']
+                listing = json.loads(request('GET', '/api/sessions', headers=auth)[1])['sessions'][0]
+                self.assertEqual((listing['selected'], listing['asked']), (1, 2))
+                exported = json.loads(request('GET', '/api/export?id=' + identity, headers=auth)[1])['text']
+            finally:
+                process.terminate()
+                process.communicate(timeout=10)
+
+            self.assertLess(exported.index('## Questions for you'), exported.index('## Read these'))
+            self.assertIn('  - Question: Why tabs before the app?', exported)
+            payload = self.payload(exported)
+            self.assertEqual(payload['counts'], dict(items=3, decided=1, accepted=0, asked=2, undecided=0))
+            self.assertEqual([(q['id'], q['question']) for q in payload['questions']],
+                             [('q1', 'Why tabs before the app?'), ('q3', 'Next week?')])
+            self.assertEqual(payload['questions'][1]['thread'], earlier)
+            self.assertEqual([i['id'] for i in payload['items']], ['q2'])
+            queue = json.loads(self.run_tool('apply', first).stdout)['items']
+            self.assertEqual([i['number'] for i in queue], [2])
+
+            out = self.run_tool('reply', first, 'q1', '--text', 'The app needs tabs to exist.', '--recommendation', 'Yes, tabs first.').stdout
+            nxt = root / 'round-r2' / 'inventory.json'
+            self.assertIn(str(nxt), out)
+            self.assertIn('--carry', out)
+            self.run_tool('reply', first, '1', '--text', 'And the palette expects them.')
+            self.assertNotEqual(self.run_tool('reply', first, 'q1', '--text', ' ', check=False).returncode, 0)
+            self.assertNotEqual(self.run_tool('reply', first, 'nope', '--text', 'x', check=False).returncode, 0)
+            reply_inventory = json.loads(nxt.read_text())
+            q1 = reply_inventory['items'][0]
+            self.assertEqual([(m['role'], m['text']) for m in q1['thread']],
+                             [('owner', 'Why tabs before the app?'), ('agent', 'The app needs tabs to exist.'),
+                              ('agent', 'And the palette expects them.')])
+            self.assertEqual(q1['recommendation'], 'Yes, tabs first.')
+            self.assertEqual(reply_inventory['items'][2]['thread'], earlier)
+
+            second = root / 'round-r2' / 'session.json'
+            self.run_tool('init', second, nxt, '--carry', first)
+            carried = {i['id']: i for i in json.loads(second.read_text())['items']}
+            # Answered: the ask clears, the note (now in the thread) clears, the card says new reply.
+            self.assertEqual((carried['q1']['action'], carried['q1']['note']), ('', ''))
+            self.assertTrue(carried['q1']['new_reply'] and carried['q1']['context_changed'])
+            # Not answered yet: the question stays asked, untouched.
+            self.assertEqual((carried['q3']['action'], carried['q3']['note'], carried['q3'].get('new_reply')), ('ask', 'Next week?', None))
+            self.assertEqual(carried['q2']['action'], 'no')
+            self.assertEqual(self.payload(self.run_tool('export', second).stdout)['undecided'][0]['new_reply'], True)
+            self.assertNotEqual(self.run_tool('reply', first, 'q3', '--text', 'x', check=False).returncode, 0)
+
+            # A rescan that knows nothing of threads keeps them, and nothing is a new reply.
+            third = root / 'round-r3' / 'session.json'
+            self.run_tool('init', third, inventory, '--carry', second)
+            rescanned = {i['id']: i for i in json.loads(third.read_text())['items']}
+            self.assertEqual(len(rescanned['q1']['thread']), 3)
+            self.assertNotIn('new_reply', rescanned['q1'])
+
+            for bad in (dict(base, ask='no', items=items),
+                        dict(base, items=[dict(items[0], thread=[dict(role='bot', text='hi')])]),
+                        dict(base, items=[dict(items[0], thread=[dict(role='agent', text='')])])):
+                inventory.write_text(json.dumps(bad))
+                self.assertNotEqual(self.run_tool('init', root / 'bad' / 'session.json', inventory, check=False).returncode, 0, bad)
+
+    def test_ask_off_is_a_plain_action(self):
+        sys.path.insert(0, str(self.tool.parent))
+        try:
+            import mgmt
+        finally:
+            sys.path.pop(0)
+        data = mgmt.build_session(dict(title='T', scope='s', default_action='keep', ask=False,
+                                       items=[dict(id='a', title='A', source='x', details='d')]))
+        data['items'][0]['action'] = 'ask'
+        text = mgmt.export(data, Path('/tmp/session.json'))
+        self.assertNotIn('## Questions for you', text)
+        self.assertEqual(self.payload(text)['counts']['decided'], 1)
 
     @unittest.skipUnless(shutil.which('node'), 'node not installed')
     def test_web_js_parses(self):

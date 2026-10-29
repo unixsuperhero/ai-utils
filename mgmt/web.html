@@ -79,6 +79,7 @@
                   <option value="all">All items</option>
                   <option value="selected">With decisions</option>
                   <option value="unselected">Undecided</option>
+                  <option value="asked">Asked</option>
                   <option value="locked">Locked</option></select
                 ><span id="visible-count"></span>
               </div>
@@ -105,11 +106,15 @@
                 <summary>Source material <span>read only</span></summary>
                 <pre id="item-details"></pre>
               </details>
+              <details id="thread" class="thread-panel" open hidden>
+                <summary>
+                  Conversation <span id="thread-count">read only</span>
+                </summary>
+                <button type="button" id="thread-earlier" class="thread-earlier" hidden></button>
+                <ol id="thread-list" class="thread-list"></ol>
+              </details>
               <div id="result" class="result" hidden></div>
-              <div id="changed-flag" class="changed-flag" hidden>
-                The source text changed since this decision was made. Recheck
-                it; any change clears this flag.
-              </div>
+              <div id="changed-flag" class="changed-flag" hidden></div>
               <section id="recommendation" class="recommendation" hidden>
                 <div class="recommendation-heading">
                   <span id="recommendation-state" class="eyebrow"></span
@@ -147,13 +152,13 @@
                   rows="5"
                   placeholder="A reminder for yourself, what to preserve, or instructions for your agent…"
                 ></textarea>
-                <p class="field-help">
+                <p id="note-help" class="field-help">
                   A note alone does not select an action. To request changes,
                   choose an action above.
                 </p>
                 <p class="field-help keys">
                   Keys: <kbd>j</kbd>/<kbd>k</kbd> item · <kbd>1</kbd>–<kbd>9</kbd>
-                  action · <kbd>a</kbd> accept recommendation · <kbd>u</kbd> next
+                  action · <kbd>?</kbd> ask the agent · <kbd>a</kbd> accept recommendation · <kbd>u</kbd> next
                   undecided · <kbd>i</kbd> note · <kbd>Esc</kbd> leave a field ·
                   <kbd>e</kbd> export
                 </p>
