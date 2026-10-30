@@ -7,9 +7,10 @@ The prompts live in `~/hub/ai/utils/prompts/sol/` (`P` below): `lane.md`, `plann
 ## Start of a session
 
 1. Read the newest `~/hub/o-plans/handoff-*.md`, then `~/hub/o-plans/README.md` (rules, "Reuse first") and the plan for the work at hand.
-2. `df -h /System/Volumes/Data /tmp`. Under 10 GiB free on the data volume, run at most one build lane at a time; under 5 GiB, launch none and tell the owner (`o-df` is their tool for freeing space; never clean caches unasked).
-3. `go env GOCACHE GOTMPDIR` must point under `~/.cache`, never `/Volumes/yaba`.
-4. When the owner says stop or wait, run nothing at all, not even a read-only `ps`.
+2. `df -h /System/Volumes/Data /tmp`. Lanes stop and report under 4 GiB free; do not launch one below that, and tell the owner (`o-df` is their tool for freeing space).
+3. Keep the Go build cache in check: when `du -sh "$(go env GOCACHE)"` passes about 25 GB, trim entries untouched for 2+ hours, `find "$(go env GOCACHE)" -type f -mmin +120 -delete`, only while no build is mid-run (no lane PID alive, no gate of yours running). Never `go clean -cache` while lanes run.
+4. `go env GOCACHE GOTMPDIR` must point under `~/.cache`, never `/Volumes/yaba`.
+5. When the owner says stop or wait, run nothing at all, not even a read-only `ps`.
 
 ## Owner decisions win
 
@@ -47,7 +48,7 @@ echo $! > $L/pid
 
 - `workspace-write` protects `.git`; `--add-dir $REPO/.git` is what lets the lane commit. The Go caches need `--add-dir` too. `/tmp` is writable.
 - Unset the `TUIOS_*` variables so a lane never reads (and marks read) your mailbox.
-- Launch independent lanes in parallel, each in its own worktree; at most two build-heavy lanes at once, fewer when the disk is low.
+- Launch independent lanes in parallel, each in its own worktree; at most two build-heavy lanes at once, one when the disk is near the 4 GiB floor.
 - Wait by PID, never by pattern (`pgrep -f` matches your own shell): `while kill -0 "$(cat $L/pid)" 2>/dev/null; do sleep 60; done`. Read `$L/report.md` when it exits; `$L/log.txt` holds the run.
 - A follow-up on the same lane: `codex exec resume --last` is unsafe with several lanes; launch a new run with the earlier report and the new instructions in the task.
 

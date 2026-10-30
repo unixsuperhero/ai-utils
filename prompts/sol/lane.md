@@ -32,7 +32,7 @@ You are the delegated agent the global rule "the main agent orchestrates; subage
 2. In a new directory, run `git rev-parse --show-toplevel` before the first commit; stop if it prints `/Users/unixsuperhero` (the home folder once was a repo; a stray commit would land there).
 3. Read the repo's `AGENTS.md` (Codex has loaded it; read the parts your change touches closely) and `docs/CODEMAP.md` when present.
 4. Reuse scan: `~/bin/reuse-scan <terms>` (grep by hand if missing) over `~/proj/matomeru-old`, `~/proj/gmtm`, `~/proj/redeck-astra*`, `~/proj/znbu`, `~/proj/now`, `~/proj/tuios-*` and the Charm projects listed in `~/proj/ochazuke/docs/CHARM-INVENTORY.md`. Copy and adapt logic; never port wholesale. Record what you reused or that nothing fit.
-5. Disk: `df -h /System/Volumes/Data /tmp`. Under 5 GiB free, stop and report; do not clean caches yourself.
+5. Disk: `df -h /System/Volumes/Data /tmp`. Under 4 GiB free, stop and report; never clean or trim caches yourself (the coordinator does).
 
 ## Never touch the owner's data or config
 
@@ -63,12 +63,14 @@ make reference     # when bindings or settings changed; TestReference must pass
 make codemap && git checkout -- docs/CHARM-INVENTORY.md   # keep CHARM-INVENTORY only if the task changed Charm refs
 ```
 
-**matomeru (mtm).** Race suite in package chunks; `--smoke` uses a temp DB unless `--data` is given.
+**matomeru (mtm).** Every package except `cmd/mtm` in one race run, then `cmd/mtm` in four chunks by test name (each fits the default timeout), then the smoke render against temp data.
 
 ```sh
 test -z "$(gofmt -l .)" && GOWORK=off go vet ./...
-GOWORK=off go list ./... | xargs -n 6 sh -c 'GOWORK=off nice go test -race "$@" || exit 255' _
-GOWORK=off go run ./cmd/mtm --smoke
+GOWORK=off nice go test -race $(GOWORK=off go list ./... | grep -v '/cmd/mtm$')
+for r in '^Test[A-C]' '^Test[D-O]' '^Test[P-S]' '^Test[T-Z]'; do GOWORK=off nice go test -race -run "$r" ./cmd/mtm || break; done
+mkdir -p $L/smoke && HOME=$L/smoke XDG_CONFIG_HOME=$L/smoke/c XDG_STATE_HOME=$L/smoke/s XDG_DATA_HOME=$L/smoke/d \
+  GOWORK=off go run ./cmd/mtm --data $L/smoke/mtm.db --smoke
 ```
 
 **o-json.** Race both builds, then the split check.
