@@ -9,7 +9,7 @@ You record o-family programs (the ochazuke demo, o-json, mtm, nabe, the o-* tool
 - **Never press `y` or `p` in a tape.** Yank writes the owner's system clipboard and paste reads it. Show copying with a register or a visible result instead, or say in the report that it was left out.
 - Never press F1 to F12. No work on `/Volumes/yaba`. Never `pgrep -f`/`pkill -f`.
 
-## House style (`~/hub/test-archive/2026-10-29/vhs/HOUSE-STYLE.md`; reference tape `record-editor-keys.tape`)
+## House style (`~/hub/tools/vhs-tutorial/HOUSE-STYLE.md`; reference tape `~/hub/test-archive/2026-10-29/vhs/record-editor-keys.tape`)
 
 ```
 # <app> demo: <what this shows>
@@ -27,14 +27,16 @@ Set TypingSpeed 60ms
 Set CursorBlink false
 
 Hide
-Type "mkdir -p /tmp/<lane>/vhs && export HOME=$(mktemp -d /tmp/<lane>/vhs/oz.XXXX) && export XDG_CONFIG_HOME=$HOME/c XDG_STATE_HOME=$HOME/s XDG_DATA_HOME=$HOME/d XDG_CACHE_HOME=$HOME/k && mkdir -p $XDG_CONFIG_HOME/<app> && mkdir -m 700 $HOME/sock && cd $HOME"
+Type "mkdir -p /tmp/<lane>/vhs && export HOME=$(mktemp -d /tmp/<lane>/vhs/oz.XXXX) && export XDG_CONFIG_HOME=$HOME/c XDG_STATE_HOME=$HOME/s XDG_DATA_HOME=$HOME/d XDG_CACHE_HOME=$HOME/k COLORTERM=truecolor && mkdir -p $XDG_CONFIG_HOME/<app> && mkdir -m 700 $HOME/sock && cd $HOME"
 Enter
-Type `printf '{"keys.echo": "footer", "keys.echo-linger": "4s"}\n' > $XDG_CONFIG_HOME/<app>/settings.json && clear && /tmp/<lane>/bin/<app> --socket $HOME/sock/app.sock run`
+Type `printf '{"keys.echo": "footer", "keys.echo-linger": "4s", "theme": "dark"}\n' > $XDG_CONFIG_HOME/<app>/settings.json && clear && /tmp/<lane>/bin/<app> --socket $HOME/sock/app.sock run`
 Enter
 Sleep 2s
 Show
 ```
 
+- Colour pins: `COLORTERM=truecolor` exported off camera so Lip Gloss keeps 24-bit colour, and `"theme": "dark"` in settings (mtm uses its `mocha` theme instead, below). For an app built on ochazuke v0.59.0 or later also add `"chrome.color": "rich"` to the settings line; older binaries report it as an unknown setting.
+- Check every tape with `vhs-tutorial lint <tape>...` before recording: it exits 1 on a missing `Set Theme`, frame line, `COLORTERM` export, `y`/`p`/F1 to F12 on camera, or mtm's pin step; a frame other than 1600x900/16 is a warning.
 - Key echo on (`keys.echo` `footer`; `badge` when the footer is busy); leave `keys.echo-terminal` off in any tape that types into a shell.
 - Pace: 250 to 400 ms between motions, 0.9 to 1.5 s after a change the viewer should read, 2 to 2.5 s on a result. End with `Hide` and the app's quit key so the last frame is the app.
 - Steps for `vhs-tutorial`: a `# Step: <title>` comment block above the command that starts each step (further comment lines are its body); blank lines separate steps; the header block's first line titles the page.
