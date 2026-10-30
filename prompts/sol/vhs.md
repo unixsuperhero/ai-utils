@@ -18,9 +18,9 @@ Output "<tape>.gif"
 
 Set Shell "bash"
 Set Theme "Catppuccin Mocha"
-Set FontSize 14
-Set Width 1132
-Set Height 606
+Set FontSize 16
+Set Width 1600
+Set Height 900
 Set Padding 12
 Set Framerate 10
 Set TypingSpeed 60ms
@@ -39,6 +39,10 @@ Show
 - Pace: 250 to 400 ms between motions, 0.9 to 1.5 s after a change the viewer should read, 2 to 2.5 s on a result. End with `Hide` and the app's quit key so the last frame is the app.
 - Steps for `vhs-tutorial`: a `# Step: <title>` comment block above the command that starts each step (further comment lines are its body); blank lines separate steps; the header block's first line titles the page.
 - Escape then a letter can read as an alt chord: `Sleep` 300 ms or more after `Escape`.
+- mtm: the first visible step after `Show` is `# Step: Pin a project`: `Ctrl+Space`, `Type "project pin"`, `Enter` pins the focused seeded project (move to it with `j` first for another one), then `Sleep 2s` so the pinned project leading the list is readable. Without a pin mtm draws ochazuke's mono theme (`cmd/mtm/colors.go`); the pin brings the colours. The palette takes no project name (`project pin acme` fails: its completions match ids, not names).
+- mtm theme: off camera, write the standard tape scheme to `$XDG_CONFIG_HOME/mtm/themes.json` (mtm's config dir; `mtm themes path` prints it) and select it in `settings.json`, as `docs/vhs/seed.sh` in matomeru does:
+  `{"mocha": {"background": "dark", "text": "#CDD6F4", "muted": "#9399B2", "accent": "#CBA6F7", "border": "#89B4FA", "surface": "#313244", "error": "#F38BA8", "tones": {"state.working": "#89B4FA", "state.needs-input": {"fg": "#F9E2AF", "bold": true}, "state.done": "#A6E3A1", "marker.star": {"fg": "#F9E2AF", "bold": true}}}}`
+  with settings `{"theme": "mocha", "keys.echo": "footer", "keys.echo-linger": "4s", "turns.status-border": "all"}`. `border` draws unfocused panel borders, `accent` focused ones, the title and the active tab.
 
 ## Record and check
 
