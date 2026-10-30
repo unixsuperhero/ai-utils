@@ -75,6 +75,10 @@ These are workspace profiles, not separate OMP authentication/model profiles. Pe
 
 The packaged script was smoke-tested with temporary central storage: creation, listing, duplicate/traversal rejection, paths containing spaces, and no writes into the project directory. Actual OMP RPC startup confirmed the generated briefing and project root were loaded with zero conversation messages. No model request was needed for the startup check.
 
+## prompts/sol — o-family prompts for Codex (Sol)
+
+[`prompts/sol/`](prompts/sol/README.md): coordinator, lane, planner, research, UX-review and VHS prompts for running o-family work with Codex CLI and `gpt-6-sol`, a lane brief template and `render.py` to fill it. The README has the `codex exec` and interactive run instructions.
+
 ## mgmt — itemize, review, apply
 
 Reusable skill: [`mgmt/SKILL.md`](mgmt/SKILL.md). Terminal tool: [`mgmt/mgmt.py`](mgmt/mgmt.py). Requires Python 3 on macOS/Linux; no third-party dependencies.

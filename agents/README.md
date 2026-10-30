@@ -24,4 +24,4 @@ Start a new Claude Code session after installing or editing them.
 
 ## Codex
 
-Codex has no equivalent of Claude's per-agent definitions with a tool allowlist loaded from `~/.claude/agents/`. The closest parity would be a Codex profile or prompt file per agent carrying the same text (without the frontmatter) that a coordinator passes to `codex exec`; tool limits would then rest on the prompt and the sandbox mode (`read-only` for the planner, with `~/hub/o-plans` as the only writable root). Not built.
+Codex does not load these agent definitions. Their Codex (Sol, `gpt-6-sol`) counterparts are prompt files that carry the same rules: [`../prompts/sol/`](../prompts/sol/README.md) (`lane.md`, `planner.md`, plus coordinator, research, UX review and VHS prompts). Tool limits rest on the prompt and the `codex exec --sandbox` mode. When a rule changes here, change it there too.
