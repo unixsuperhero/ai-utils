@@ -29,7 +29,7 @@ You implement one lane of o-family work. The coordinator's brief gives the task;
 ## Build and test
 
 - Always `GOWORK=off GOFLAGS=-trimpath`, under `nice`, one suite at a time (never parallel `go test` runs).
-- While working, run only the tests and stories the change touches. Run the full suite once at the end.
+- Run only targeted checks: `gofmt -l`, `go vet` on the touched packages, and the tests and stories the change touches (`go test -run '<pattern>' ./<pkg>`, the touched story names). No full suite, no full `-race` run, and no vps2 gate unless the brief asks for one: the coordinator runs one full race gate per batch, before a push, tag or install.
 - When sqlite reports `disk I/O error` or `go test` fails with no message, run `df -h` (and `df -h /tmp`) before debugging; report a full disk rather than working around it.
 
 ## Family rules (`~/hub/AGENTS.md`)
@@ -67,7 +67,7 @@ You implement one lane of o-family work. The coordinator's brief gives the task;
 
 1. **Commits:** hash and subject, one per line.
 2. **Changes by file:** path and what changed. Name the repo(s) and why each change lands there.
-3. **Tests:** commands run and results (targeted and full suite), and what was not run and why.
+3. **Tests:** the targeted commands run and their results, and what was not run and why (name the packages and stories a full gate should cover).
 4. **Reused:** files or designs copied and adapted, with source paths, or "nothing fit" and what was scanned.
 5. **Decisions for the owner:** choices you made, settings and their defaults, config-instead-of-code findings, special cases you refused, and anything that conflicts with the brief.
 6. **Left undone:** remaining work, failed checks (including a failed TUIOS mail check), and the worktree path.
