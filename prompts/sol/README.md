@@ -1,6 +1,6 @@
 # Sol prompts for o-family work
 
-Prompts for running o-family ("ofam") work with **Sol**: OpenAI Codex CLI, model `gpt-6-sol` (`~/.codex/config.toml`). They are the Codex counterparts of the Claude agents `ofam-lane`, `ofam-planner` (`../../agents/`), `ux-reviewer` and `ux-applier` (`~/hub/ai/agents/`). Codex does not load those agent definitions, so each prompt carries its own rules.
+Prompts for running o-family ("ofam") work with **Sol**: OpenAI Codex CLI, model `gpt-6.1-sol` (`~/.codex/config.toml`). They are the Codex counterparts of the Claude agents `ofam-lane`, `ofam-planner` (`../../agents/`), `ux-reviewer` and `ux-applier` (`~/hub/ai/agents/`). Codex does not load those agent definitions, so each prompt carries checked shared-rule blocks. See `../../agents/README.md` for the Claude/Codex/omp install commands and `../../scripts/agent-sync-check.py` for drift checks.
 
 ## What Codex already loads (not repeated here)
 
@@ -25,9 +25,9 @@ Check what a run will see with `(cd <dir> && codex debug prompt-input)`.
 
 ## Division of labour
 
-The **coordinator** thinks, plans, briefs and verifies; it changes no code itself. **Lanes** implement, one per worktree and branch (`<repo>/.worktrees/<lane>`, scratch in `/tmp/<lane>/`), commit, and report in a fixed shape; they never merge, push, tag or install. The **planner** writes plans before lanes are briefed; **research** answers questions without changing anything; **ux-review** returns a punch list that goes back to a lane as its task. The coordinator reviews every diff, re-runs the repo's gate ("Full gate per repo" in `lane.md`; matomeru's `cmd/mtm` race suite runs in four test-name chunks), merges, pushes once green, reinstalls binaries, trims the Go build cache past ~25 GB (entries untouched 2+ hours, never mid-build, never `go clean -cache` during lanes) and updates `~/hub/o-plans`. Lanes stop and report under 4 GiB free disk.
+The **coordinator** thinks, plans, briefs and verifies; it changes no code itself. **Lanes** implement, one per worktree and branch (`<repo>/.worktrees/<lane>`, scratch in `/tmp/<lane>/`), commit, and report in a fixed shape; they never merge, push, tag or install. The **planner** writes plans before lanes are briefed; **research** answers questions without changing anything; **ux-review** returns a punch list that goes back to a lane as its task. Lanes run targeted checks only unless the brief explicitly asks for a full gate. The coordinator reviews every diff and runs one full race gate per batch before push, tag or install ("Gate recipes" in `lane.md`; matomeru's `cmd/mtm` race suite runs in four test-name chunks), merges, pushes once green, reinstalls binaries, trims the Go build cache past ~25 GB (entries untouched 2+ hours, never mid-build, never `go clean -cache` during lanes) and updates `~/hub/o-plans`. Lanes stop and report under 4 GiB free disk.
 
-Codex runs one agent per process, so the coordinator launches each lane as a background `codex exec` in that lane's worktree, records its PID and waits on the PID (never `pgrep -f`). Some Codex builds also offer `spawn_agent`; those agents share the parent's working directory, so use it only for read-only research or review.
+Prefer an interactive Codex lane in its own tuios pane, watched by `~/hub/tools/sol-lane/watch.py`, per the global instructions. The non-interactive fallback below launches each lane as a background `codex exec` in that lane's worktree, records its PID and waits on the PID (never `pgrep -f`). Some Codex builds also offer `spawn_agent`; those agents share the parent's working directory, so use it only for read-only research or review.
 
 ## Running them
 
@@ -37,10 +37,10 @@ Prompts without placeholders take the task appended after the prompt:
 
 ```sh
 P=~/hub/ai/utils/prompts/sol
-codex exec -m gpt-6-sol -C ~/proj/o-json --sandbox read-only \
+codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -C ~/proj/o-json --sandbox read-only \
   "$(cat $P/research.md) Task: where does o-json read its settings file?"
 
-codex exec -m gpt-6-sol -C ~/hub/o-plans --sandbox workspace-write \
+codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -C ~/hub/o-plans --sandbox workspace-write \
   "$(cat $P/planner.md) Task: plan o-json nested tables from plans/o-json.md and the hover prototype."
 ```
 
@@ -52,7 +52,7 @@ mkdir -p $L && git -C $REPO worktree add .worktrees/$LANE -b $LANE main
 cp $P/brief-template.md $L/brief.md && $EDITOR $L/brief.md
 python3 -I $P/render.py $P/lane.md $L/brief.md > $L/prompt.md
 env -u TUIOS_ENV -u TUIOS_SESSION -u TUIOS_PANE_ID \
-  nohup nice codex exec -m gpt-6-sol -C $REPO/.worktrees/$LANE --sandbox workspace-write \
+  nohup nice codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -C $REPO/.worktrees/$LANE --sandbox workspace-write \
     --add-dir $REPO/.git --add-dir ~/.cache/go-build --add-dir ~/.cache/go-tmp --add-dir ~/go/pkg/mod \
     -o $L/report.md - < $L/prompt.md > $L/log.txt 2>&1 &
 echo $! > $L/pid
@@ -65,10 +65,10 @@ while kill -0 "$(cat $L/pid)" 2>/dev/null; do sleep 60; done; cat $L/report.md
 
 ### Interactive (`codex`)
 
-- Start in the right directory with the right sandbox: `codex -m gpt-6-sol -C ~/hub` for the coordinator.
+- Start in the right directory with the right sandbox: `codex -m gpt-6.1-sol -c model_reasoning_effort=high -C ~/hub` for the coordinator.
 - Paste the prompt as the first message: `pbcopy < $P/coordinator.md`, paste, then add the task. For a lane, paste the rendered `$L/prompt.md`.
-- Or install them as Codex custom prompts and pick them with `/prompts`: `mkdir -p ~/.codex/prompts && for f in coordinator lane planner research ux-review vhs; do ln -sfn $P/$f.md ~/.codex/prompts/ofam-$f.md; done`, then type `/prompts:ofam-research` and the task. Codex custom prompts fill `$ARGUMENTS`/`$1`-style arguments, not `{{KEY}}`; for `lane.md` use the rendered file.
+- Or install them as Codex custom prompts and pick them with `/prompts`: `mkdir -p ~/.codex/prompts && for f in coordinator planner research ux-review vhs; do ln -sfn $P/$f.md ~/.codex/prompts/ofam-$f.md; done`, then type `/prompts:ofam-research` and the task. Codex custom prompts fill `$ARGUMENTS`/`$1`-style arguments, not `{{KEY}}`; for `lane.md` use the rendered file.
 
 ## Keeping them current
 
-The rules come from `~/hub/AGENTS.md` (family rules), `~/hub/ai/instructions/AGENTS.md` (global), ochazuke's `AGENTS.md` and `docs/UX-RULES.md`, `~/hub/o-plans/README.md`, the Claude agents above, the VHS house style (`~/hub/test-archive/2026-10-29/vhs/HOUSE-STYLE.md`) and the coordinator's memory notes. When one changes, update the prompt that carries it, and the gate commands in `lane.md` when a repo's gate changes.
+The rules come from `~/hub/AGENTS.md` (family rules), `~/hub/ai/instructions/AGENTS.md` (global), ochazuke's `AGENTS.md` and `docs/UX-RULES.md`, `~/hub/o-plans/README.md`, the Claude agents above, the VHS house style (`~/hub/test-archive/2026-10-29/vhs/HOUSE-STYLE.md`) and the coordinator's memory notes. Edit the canonical blocks in `agents/ofam-lane.md`, `agents/ofam-planner.md` or `agents/rules/`, then run `python3 -I scripts/agent-sync-check.py --write` and `python3 -I scripts/agent-sync-check.py --upstream` from the repo root. Review external source changes before refreshing `agents/rules/upstreams.json`. Keep the coordinator gate recipes in `lane.md` current when a repo gate changes. Harness mechanics outside shared blocks still need review.

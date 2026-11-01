@@ -43,7 +43,7 @@ render.py refuses to print while a section is empty. Comments like this one are 
 
 ## DONE_WHEN
 
-- Targeted tests and stories for the change pass; one full gate run for the repo passes.
+- Targeted tests and stories for the change pass; the coordinator owns the full gate unless this brief explicitly asks for it.
 - <!-- the behaviour, the story names, the catalog/reference output, CHANGELOG Unreleased, codemap -->
 
 ## TRAILER

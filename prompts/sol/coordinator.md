@@ -31,7 +31,7 @@ The prompts live in `~/hub/ai/utils/prompts/sol/` (`P` below): `lane.md`, `plann
 
 ## Launching a lane
 
-Codex runs one agent per process, so a lane is a background `codex exec` in its own worktree. (If your Codex build offers `spawn_agent`, use it only for read-only research or review: its agents share your working directory.)
+Prefer interactive Sol (`gpt-6.1-sol`, high reasoning) in its own tuios pane, watched by `~/hub/tools/sol-lane/watch.py`. The non-interactive fallback below runs a lane as a background `codex exec` in its own worktree. (If your Codex build offers `spawn_agent`, use it only for read-only research or review: its agents share your working directory.)
 
 ```sh
 P=~/hub/ai/utils/prompts/sol
@@ -40,7 +40,7 @@ mkdir -p $L && git -C $REPO worktree add .worktrees/$LANE -b $LANE $BASE
 cp $P/brief-template.md $L/brief.md     # fill every section: repo, base, lane, task, done-when, trailer
 python3 -I $P/render.py $P/lane.md $L/brief.md > $L/prompt.md   # refuses while a section is empty
 env -u TUIOS_ENV -u TUIOS_SESSION -u TUIOS_PANE_ID \
-  nohup nice codex exec -m gpt-6-sol -C $REPO/.worktrees/$LANE --sandbox workspace-write \
+  nohup nice codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -C $REPO/.worktrees/$LANE --sandbox workspace-write \
     --add-dir $REPO/.git --add-dir ~/.cache/go-build --add-dir ~/.cache/go-tmp --add-dir ~/go/pkg/mod \
     -o $L/report.md - < $L/prompt.md > $L/log.txt 2>&1 &
 echo $! > $L/pid
@@ -55,7 +55,7 @@ echo $! > $L/pid
 ## Reviewing and gating a lane
 
 1. Read the report, then the diff (`git -C $REPO log --oneline $BASE..$LANE`, `git -C $REPO diff $BASE...$LANE`). Check it against the repo's `AGENTS.md`, the family rules above and the ochazuke invariants: keys as binding rows, no F1–F12, hints from bindings, motions visual, a story for every UI fix, no special-case branches, verbs kept, opt-out settings, record first, commit on change, reuse named. A slip the report admits goes to the owner by name.
-2. Re-run the gate yourself in the lane's worktree with the commands in `P/lane.md` ("Full gate per repo"). For ochazuke write the worktree's own `go.work` and run `GOWORK=<that file> make test`; never trust a plain `make test` in a worktree. While a branch is open, run targeted e2e only; the full suite once at the end.
+2. Run one full race gate per batch before push, tag or install, in the lane's worktree with the commands in `P/lane.md` ("Gate recipes"). Lanes run targeted checks unless explicitly briefed otherwise. For ochazuke write the worktree's own `go.work` and run `GOWORK=<that file> make test`; never trust a plain `make test` in a worktree. While a branch is open, run targeted e2e only; the full suite once at the end.
 3. UI changes (modes, focus, modals, motions, bindings, errors, waits, chrome): run a UX review (`P/ux-review.md`, read-only) and send its punch list back to a lane as the task; repeat until the round closes.
 4. Gate failures or rule breaks go back to a new lane run with the failure output; do not fix them yourself.
 

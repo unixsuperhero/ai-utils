@@ -1,0 +1,18 @@
+{
+  "~/hub/ai/agents/ux-reviewer.md": {
+    "sha256": "9afc4bcd002bdd90ebf345a107c888c9f5cf629350af8821da92b5ffa2fc4177",
+    "reviewed_for": "agents/rules/ux-review.md"
+  },
+  "~/hub/ai/agents/ux-applier.md": {
+    "sha256": "e754eac22a86dfd15d38c208f9c61a497f4e7cccd30871510effa9faa18a7a5c",
+    "reviewed_for": "agents/rules/ux-apply.md"
+  },
+  "~/hub/AGENTS.md": {
+    "sha256": "c1ec439a287263107b7e8f25f5b269e81e4ab4f73b564c1e08060762a012c61d",
+    "reviewed_for": "agents/ofam-lane.md, agents/ofam-planner.md, agents/rules/workflow.md"
+  },
+  "~/hub/ai/instructions/AGENTS.md": {
+    "sha256": "ba790fd8d9314508dbdb0f2fcbdb492e490df9cb23c7bae35dbddb056e5b1b63",
+    "reviewed_for": "agents/ofam-lane.md, agents/ofam-planner.md, agents/rules/workflow.md"
+  }
+}
