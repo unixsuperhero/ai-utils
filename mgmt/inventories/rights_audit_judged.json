@@ -1,0 +1,749 @@
+{
+ "comment": "Judged rows of rights_audit.py. right is the right the verb should have under the agent-rights plan (read/write, no delete, only archive); reason says why. Edit by hand after reading what the verb does.",
+ "rows": {
+  "action-item.archive": {
+   "right": "allow",
+   "reason": "is the archive: hides the row, keeps its record, undoable"
+  },
+  "action-item.delete": {
+   "right": "never",
+   "reason": "action-item.archive exists; deleting loses the item"
+  },
+  "action-item.restore": {
+   "right": "allow",
+   "reason": "undoes an archive: clears the archive prop"
+  },
+  "animation.field.delete": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "answer.cancel": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "app.close": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "cmds.cmd.add": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "cmds.cmd.delete": {
+   "right": "never",
+   "reason": "a verb named delete is never for agents even when it only hides (coordinator decision 1); archive is the agent path"
+  },
+  "cmds.cmd.edit-stdin": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "cmds.cmd.reset": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "cmds.cmd.runs-clear": {
+   "right": "never",
+   "reason": "drops the captured output of a finished run"
+  },
+  "cmds.cmd.undo": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "cmds.run.delete": {
+   "right": "never",
+   "reason": "drops the captured output of a finished run"
+  },
+  "context-item.archive": {
+   "right": "allow",
+   "reason": "is the archive: hides the row, keeps its record, undoable"
+  },
+  "context-item.delete": {
+   "right": "never",
+   "reason": "destroys the record; the agent path is task.archive / restore"
+  },
+  "context-item.restore": {
+   "right": "allow",
+   "reason": "undoes an archive: clears the archive prop"
+  },
+  "csv.cell.clear": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "csv.column.delete": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "csv.column.filter": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "csv.field.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "csv.row.delete": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "csv.row.insertBelow": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "csv.sheet.clear": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "csv.sheet.search": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "csv.sheet.undo": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "df.culprit.clear": {
+   "right": "confirm",
+   "reason": "disk-level effect: clears rebuildable data or moves it, verifies first (plan 2)"
+  },
+  "df.culprit.relocate": {
+   "right": "confirm",
+   "reason": "disk-level effect: clears rebuildable data or moves it, verifies first (plan 2)"
+  },
+  "directory-path.cancel": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "dirs.remove-base": {
+   "right": "allow",
+   "reason": "restructures or detaches an association only; disk and records untouched"
+  },
+  "extension.register": {
+   "right": "never",
+   "reason": "extension registry is owner-only: an agent could not undo it"
+  },
+  "extension.remove": {
+   "right": "never",
+   "reason": "unregisters an extension; --purge deletes its data file; only the owner can re-register"
+  },
+  "extension.setup": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "extension.setup-undo": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "fleet.machine.remove": {
+   "right": "never",
+   "reason": "deletes a stored file or record; no archive verb yet"
+  },
+  "fleet.machine.set": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "gh.pr.checkout": {
+   "right": "allow",
+   "reason": "prunes only remote-tracking refs on fetch; checkout changes the working copy by an ordinary git command"
+  },
+  "git.branch.delete": {
+   "right": "never",
+   "reason": "--force loses commits or dirty work; no archive"
+  },
+  "git.compare.close": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "git.compare.fetch": {
+   "right": "allow",
+   "reason": "prunes only remote-tracking refs on fetch; checkout changes the working copy by an ordinary git command"
+  },
+  "git.field.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "git.field.commit": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "git.repo.fetch": {
+   "right": "allow",
+   "reason": "prunes only remote-tracking refs on fetch; checkout changes the working copy by an ordinary git command"
+  },
+  "git.worktree.remove": {
+   "right": "never",
+   "reason": "--force loses commits or dirty work; no archive"
+  },
+  "inventory.daily.install": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "inventory.daily.uninstall": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "koe.clip.cancel": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "koe.clip.delete": {
+   "right": "never",
+   "reason": "deletes a stored file or record; no archive verb yet"
+  },
+  "koe.clip.stop": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "koe.session.disconnect": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "lane.lane.cancel": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "lane.lane.delete": {
+   "right": "never",
+   "reason": "a verb named delete is never for agents even when it only hides (coordinator decision 1); archive is the agent path"
+  },
+  "lane.lane.link": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "lane.lane.merge": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "lane.lane.reword": {
+   "right": "allow",
+   "reason": "a reword is an owner-listed write; attribution recorded (coordinator decision 5)"
+  },
+  "lane.lane.unlink": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "mcp.mcp-server.forget": {
+   "right": "allow",
+   "reason": "forget drops a saved snapshot that discover saves again; login/logout re-authenticate (plan 2)"
+  },
+  "mcp.mcp-server.login": {
+   "right": "allow",
+   "reason": "forget drops a saved snapshot that discover saves again; login/logout re-authenticate (plan 2)"
+  },
+  "mcp.mcp-server.logout": {
+   "right": "allow",
+   "reason": "forget drops a saved snapshot that discover saves again; login/logout re-authenticate (plan 2)"
+  },
+  "md.doc.delete": {
+   "right": "never",
+   "reason": "deletes a stored file or record; no archive verb yet"
+  },
+  "md.doc.note": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "nabe.extension.register": {
+   "right": "never",
+   "reason": "extension registry is owner-only: an agent could not undo it"
+  },
+  "nabe.extension.unregister": {
+   "right": "never",
+   "reason": "extension registry is owner-only: an agent could not undo it"
+  },
+  "note.archive": {
+   "right": "allow",
+   "reason": "is the archive: hides the row, keeps its record, undoable"
+  },
+  "note.delete": {
+   "right": "never",
+   "reason": "destroys the record; the agent path is task.archive / restore"
+  },
+  "note.restore": {
+   "right": "allow",
+   "reason": "undoes an archive: clears the archive prop"
+  },
+  "ochazuke.about.close": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.chooser.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.chooser.clear-props": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.completion.accept": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.config.export": {
+   "right": "allow",
+   "reason": "writes a reference of the configuration into a chosen directory; the config itself is untouched"
+  },
+  "ochazuke.confirm.accept": {
+   "right": "never",
+   "reason": "the owner-only gate: approving or clearing a prompt lowers the tier"
+  },
+  "ochazuke.confirm.set": {
+   "right": "never",
+   "reason": "the owner-only gate: approving or clearing a prompt lowers the tier"
+  },
+  "ochazuke.filter-form.delete-saved": {
+   "right": "never",
+   "reason": "deletes a stored saved filter; undo across a headless run is unverified (coordinator decision 2: lane checks)"
+  },
+  "ochazuke.filter-form.remove-condition": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.find-line.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.form.clear": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.history.repeat": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.input.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.input.delete": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.input.insert": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.input.kill": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.input.operator": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.input.replace": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.jobs.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.filter": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.filter-choose": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.filter-clear": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.filter-erase": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.filter-prop-clear": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.filter-props-clear": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.filter-saved-delete": {
+   "right": "never",
+   "reason": "deletes a stored saved filter; undo across a headless run is unverified (coordinator decision 2: lane checks)"
+  },
+  "ochazuke.list.flush-lingering": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.reset-columns": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.sort": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.list.sort-clear": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.macro.stop": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.markdown.delete": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.markdown.end-list": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.markdown.insert-block": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.markdown.undo": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.markdown.unmark": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.markdown.yank": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.modal.close": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.mode.set": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.notice.clear": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.outline.add": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.outline.delete": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.outline.edit": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.outline.leave": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.outline.zoom-reset": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.palette.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.palette.close": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.palette.recall": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.palette.set": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.pane.reset": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.picker.close": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.register.select": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.register.set": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.setting-item.delete": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.setting-item.reset": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "ochazuke.setting-value.cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.setting.remove": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.setting.reset": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.setting.revert": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.settings-section.reset": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.settings-section.revert": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.settings-tab.reset": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.settings-tab.revert": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.settings.close": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.settings.reset": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.settings.reset-all": {
+   "right": "never",
+   "reason": "wipes every setting; undo does not survive a headless run"
+  },
+  "ochazuke.settings.revert": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.settings.review": {
+   "right": "allow",
+   "reason": "a settings write: reset or revert to the default is undoable; protected settings are the settings-protected lane (plan 3)"
+  },
+  "ochazuke.terminal.detach": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.terminal.hints-cancel": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.terminal.hints-erase": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.timeline.close": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "ochazuke.timeline.close-all": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "outline-project.confirm-delete": {
+   "right": "never",
+   "reason": "removes the project; orphans its tasks and records, no archive yet"
+  },
+  "outline-project.delete": {
+   "right": "never",
+   "reason": "removes the project; orphans its tasks and records, no archive yet"
+  },
+  "outline-root.confirm-delete": {
+   "right": "never",
+   "reason": "removes the project; orphans its tasks and records, no archive yet"
+  },
+  "outline-root.delete": {
+   "right": "never",
+   "reason": "removes the project; orphans its tasks and records, no archive yet"
+  },
+  "pane.kill": {
+   "right": "confirm",
+   "reason": "closes a process or session; scrollback and process state are lost but no stored record (plan 2)"
+  },
+  "pane.killBlocked": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "pane.rename": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "pane.start": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "pane.view": {
+   "right": "allow",
+   "reason": "UI-only: closes or cancels a view, prompt, filter or draft; every change is already written"
+  },
+  "proj.project.unlink": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "project-base.remove": {
+   "right": "allow",
+   "reason": "restructures or detaches an association only; disk and records untouched"
+  },
+  "project-dir.remove": {
+   "right": "allow",
+   "reason": "restructures or detaches an association only; disk and records untouched"
+  },
+  "project.delete": {
+   "right": "never",
+   "reason": "removes the project; orphans its tasks and records, no archive yet"
+  },
+  "project.remove-directory": {
+   "right": "allow",
+   "reason": "restructures or detaches an association only; disk and records untouched"
+  },
+  "project.unpin": {
+   "right": "allow",
+   "reason": "restructures or detaches an association only; disk and records untouched"
+  },
+  "qbt.config.init": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "qbt.guard.rebase": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "qbt.guard.resume": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "qbt.guard.uninstall": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "qbt.torrent.delete": {
+   "right": "never",
+   "reason": "deletes a stored file or record; no archive verb yet"
+  },
+  "questions.question.delete": {
+   "right": "never",
+   "reason": "a verb named delete is never for agents even when it only hides (coordinator decision 1); archive is the agent path"
+  },
+  "questions.question.merge": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "questions.question.undecide": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "questions.question.unlink": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "questions.question.unstar": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "questions.question.untag": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "quick-note.close": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "reminder.archive": {
+   "right": "allow",
+   "reason": "is the archive: hides the row, keeps its record, undoable"
+  },
+  "reminder.delete": {
+   "right": "never",
+   "reason": "reminder has archive and restore; delete loses the record"
+  },
+  "reminder.restore": {
+   "right": "allow",
+   "reason": "undoes an archive: clears the archive prop"
+  },
+  "run.forget": {
+   "right": "never",
+   "reason": "drops the captured output of a finished run"
+  },
+  "run.stop": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "saved.delete": {
+   "right": "never",
+   "reason": "removes a saved view or Vim record; no archive yet"
+  },
+  "schedule.delete": {
+   "right": "never",
+   "reason": "removes a schedule; schedule.toggle disables instead, no archive yet"
+  },
+  "schedule.reset": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "session.kill": {
+   "right": "confirm",
+   "reason": "closes a process or session; scrollback and process state are lost but no stored record (plan 2)"
+  },
+  "setup.install": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "setup.uninstall": {
+   "right": "allow",
+   "reason": "restorable writes: install or remove setup items the extension owns, or reset a schedule to its defaults"
+  },
+  "slack.slack-channel.not-oncall": {
+   "right": "allow",
+   "reason": "a write on the tool's own records; history keeps it undoable or it is reversible by the matching add"
+  },
+  "story.recording.delete": {
+   "right": "never",
+   "reason": "deletes a stored file or record; no archive verb yet"
+  },
+  "task-outline.close": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "task-outline.detach": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "task.archive": {
+   "right": "allow",
+   "reason": "is the archive: hides the row, keeps its record, undoable"
+  },
+  "task.delete": {
+   "right": "never",
+   "reason": "destroys the record; the agent path is task.archive / restore"
+  },
+  "task.restore": {
+   "right": "allow",
+   "reason": "undoes an archive: clears the archive prop"
+  },
+  "turn-prompt.detach": {
+   "right": "allow",
+   "reason": "an edit inside a document, buffer or form: undoable (coordinator decision 1); not deleting a thing"
+  },
+  "turn.close": {
+   "right": "allow",
+   "reason": "a lifecycle call: stops or closes a process or view, no stored data lost"
+  },
+  "vim.delete": {
+   "right": "never",
+   "reason": "removes a saved view or Vim record; no archive yet"
+  }
+ }
+}

@@ -83,6 +83,8 @@ The packaged script was smoke-tested with temporary central storage: creation, l
 
 Reusable skill: [`mgmt/SKILL.md`](mgmt/SKILL.md). Terminal tool: [`mgmt/mgmt.py`](mgmt/mgmt.py). Requires Python 3 on macOS/Linux; no third-party dependencies.
 
+Inventories with a helper live in [`mgmt/inventories/`](mgmt/inventories/): `owner_questions.py` (open owner questions in a plans folder) and `rights_audit.py` (agent rights of mtm and the family tools against the judged rows in `rights_audit_judged.json`; `python3 -I mgmt/inventories/rights_audit.py scan --mtm-bin PATH`).
+
 Tell your assistant:
 
 ```text
