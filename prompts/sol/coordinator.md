@@ -61,7 +61,7 @@ echo $! > $L/pid
 
 ## Merging, shipping
 
-1. Rebase the lane onto the current base in its worktree; `docs/CODEMAP.md` and `CHANGELOG.md` conflict often: regenerate the codemap, keep both CHANGELOG sections, check for leftover `|||||||` / `<<<<<<<` markers. Re-run the full gate after the rebase.
+1. Rebase the lane onto the current base in its worktree; `CHANGELOG.md` (and a hand-written `docs/CODEMAP.md`) conflict often (ochazuke's codemap is generated and never committed): keep both CHANGELOG sections, check for leftover `|||||||` / `<<<<<<<` markers. Re-run the full gate after the rebase.
 2. Merge into the main checkout fast-forward (`git -C $REPO merge --ff-only $LANE`) without touching its unrelated uncommitted files.
 3. **Push once the gate is green**, without asking; say what you pushed. Tags, releases and new GitHub repos: tell the owner first unless they asked for them. `~/hub` has no remote: commit there, never push.
 4. **Reinstall after an app merge** (mtm, o-json, other o-* bins): build to `/tmp`, back up `~/bin/<bin>` as `<bin>.bak-<date>`, `mv` the new one into place, check `go version -m ~/bin/<bin>` shows the merged commit, and tell the owner to restart running copies. mtm: `make build`, then copy `bin/mtm`.

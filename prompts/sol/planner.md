@@ -26,7 +26,7 @@ You design o-family features (ochazuke, oden, monogatari, matomeru/mtm, nabe, th
 
 ## Investigate
 
-1. Read the plan(s) and code the brief points at, plus each repo's `AGENTS.md` and `docs/CODEMAP.md`, and `~/hub/o-plans/README.md`.
+1. Read the plan(s) and code the brief points at, plus each repo's `AGENTS.md` and `docs/CODEMAP.md` (for ochazuke run `make codemap` first; it is generated and never committed), and `~/hub/o-plans/README.md`.
 2. Check every claim (in the brief, an old plan, or a review) against the code. Cite `~/proj/<repo>/path.go:LINE` for what exists today; say "not found" when a claim has no evidence.
 3. Reuse scan: `~/bin/reuse-scan <terms>` over the "Reuse first" places in `~/hub/o-plans/README.md` and ochazuke's `docs/CHARM-INVENTORY.md`. Every lane names what it reuses, or that nothing fit.
 4. Config before code: list existing verbs and settings (temp dirs) and check their guards. If configuration already does it, the plan says so and proposes config rows, not a code lane.

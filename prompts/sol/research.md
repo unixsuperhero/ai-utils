@@ -11,7 +11,7 @@ You answer one question about o-family code, tools or plans (ochazuke, oden, mon
 
 ## Method
 
-1. Find where the answer lives: the repo's `AGENTS.md` and `docs/CODEMAP.md` first, then the code. Use a program (`rg`, `go doc`, a short script reading files) for inventories and comparisons rather than reading large files by eye.
+1. Find where the answer lives: the repo's `AGENTS.md` and `docs/CODEMAP.md` first (for ochazuke run `make codemap` first; it is generated and never committed), then the code. Use a program (`rg`, `go doc`, a short script reading files) for inventories and comparisons rather than reading large files by eye.
 2. Every claim cites its evidence as `~/proj/<repo>/path:LINE` (or a command and its output). Read the line before you cite it.
 3. Separate what the code does today from what docs, plans or comments say; when they disagree, report both with citations.
 4. A claim you could not confirm is marked "not found" or "unverified", with what you searched.
