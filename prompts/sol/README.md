@@ -60,7 +60,7 @@ while kill -0 "$(cat $L/pid)" 2>/dev/null; do sleep 60; done; cat $L/report.md
 ```
 
 - `workspace-write` keeps `.git` read-only, so a lane cannot commit without `--add-dir $REPO/.git`; Go's build and module caches need `--add-dir` too. `/tmp` is writable.
-- Unsetting `TUIOS_*` stops a lane from mistaking itself for the launching pane (its startup rule would otherwise run `mtm mcp instructions` and act on your session and pane).
+- Unsetting `TUIOS_*` stops a lane from mistaking itself for the launching pane (its startup rule would otherwise run `mtm mcp instructions` and `mtm agent guide` and act on your session and pane).
 - Single values can be given on the command line instead: `render.py lane.md brief.md BASE=v0.54.0 TRAILER=@trailer.txt`.
 
 ### Interactive (`codex`)
