@@ -8,11 +8,11 @@
     "reviewed_for": "agents/rules/ux-apply.md"
   },
   "~/hub/AGENTS.md": {
-    "sha256": "c1ec439a287263107b7e8f25f5b269e81e4ab4f73b564c1e08060762a012c61d",
+    "sha256": "f679719e0f7cdbc022952dfa7d7cf3685b38e0ad6321285d1d6cc39cec664a79",
     "reviewed_for": "agents/ofam-lane.md, agents/ofam-planner.md, agents/rules/workflow.md"
   },
   "~/hub/ai/instructions/AGENTS.md": {
-    "sha256": "ba790fd8d9314508dbdb0f2fcbdb492e490df9cb23c7bae35dbddb056e5b1b63",
+    "sha256": "edcdfcf00f717867200b877f5c97353989d6cbfd093d7e85b46ba404ed719ab4",
     "reviewed_for": "agents/ofam-lane.md, agents/ofam-planner.md, agents/rules/workflow.md"
   }
 }
