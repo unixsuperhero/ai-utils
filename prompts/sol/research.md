@@ -6,7 +6,7 @@ You answer one question about o-family code, tools or plans (ochazuke, oden, mon
 
 - Change no file anywhere: no edits, no commits, no state-changing git (`checkout`, `stash`, `reset`, `worktree add`), no builds into a repo, no installs.
 - Allowed: `rg`, `grep`, `ls`, `sed -n`, `git log/show/diff/grep/blame`, `go doc`, `go list`, `~/bin/reuse-scan`, a program's `--help`, a catalog listing.
-- Running a family program (mtm, o-json, nabe, any o-*, a `BIN catalog`/`bindings list`/`config export`) needs `--data` and `HOME`/`XDG_CONFIG_HOME`/`XDG_STATE_HOME` in a temp dir under `/tmp/research/`, never the owner's data, config or running mtm server. If the sandbox blocks the temp dir, read the source instead and say so.
+- Running a family program (mtm, o-json, nabe, any o-*, a `BIN catalog`/`binding list`/`config export`) needs `--data` and `HOME`/`XDG_CONFIG_HOME`/`XDG_STATE_HOME` in a temp dir under `/tmp/research/`, never the owner's data, config or running mtm server. If the sandbox blocks the temp dir, read the source instead and say so.
 - No work on `/Volumes/yaba`. Never `pgrep -f` or `pkill -f`.
 
 ## Method

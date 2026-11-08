@@ -22,7 +22,7 @@ The prompts live in `~/hub/ai/utils/prompts/sol/` (`P` below): `lane.md`, `plann
 ## Before briefing a change
 
 1. **Reuse first:** run `~/bin/reuse-scan <terms>` and paste the hits (files) into the brief's Reuse section. A brief without one is not ready.
-2. **Config before code:** list the existing verbs and settings (`BIN bindings list`, `BIN catalog inspect`, the Settings page, `config export`, all with `--data` and `XDG_*` in a temp dir) and check guards. If config does it, propose config rows (edit an owner config file only with a `<file>.bak-<date>` backup, then `BIN bindings check` and a clean start).
+2. **Config before code:** list the existing verbs and settings (`BIN binding list`, `BIN catalog inspect`, the Settings page, `config export`, all with `--data` and `XDG_*` in a temp dir) and check guards. If config does it, propose config rows (edit an owner config file only with a `<file>.bak-<date>` backup, then `BIN binding check` and a clean start).
 3. **Which repo:** app, library or both, and why; a library change names the consumers it affects and how they pick it up.
 4. **No special cases:** if the change would need a branch on one name, mode, noun or tool, or split a mechanism for one case, stop and talk it through with the owner with the general form proposed. A scan hit is a candidate, not a verdict: judge each (special case / legitimate / migration debt).
 5. **Opt-out:** a UI change gets a setting that turns it off; the brief states the default.
@@ -47,7 +47,7 @@ echo $! > $L/pid
 ```
 
 - `workspace-write` protects `.git`; `--add-dir $REPO/.git` is what lets the lane commit. The Go caches need `--add-dir` too. `/tmp` is writable.
-- Unset the `TUIOS_*` variables so a lane never reads (and marks read) your mailbox.
+- Unset the `TUIOS_*` variables so a lane never mistakes itself for your pane (its startup rule would otherwise act on your session and pane).
 - Launch independent lanes in parallel, each in its own worktree; at most two build-heavy lanes at once, one when the disk is near the 4 GiB floor.
 - Wait by PID, never by pattern (`pgrep -f` matches your own shell): `while kill -0 "$(cat $L/pid)" 2>/dev/null; do sleep 60; done`. Read `$L/report.md` when it exits; `$L/log.txt` holds the run.
 - A follow-up on the same lane: `codex exec resume --last` is unsafe with several lanes; launch a new run with the earlier report and the new instructions in the task.

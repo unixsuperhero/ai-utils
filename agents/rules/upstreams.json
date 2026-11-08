@@ -4,7 +4,7 @@
     "reviewed_for": "agents/rules/ux-review.md"
   },
   "~/hub/ai/agents/ux-applier.md": {
-    "sha256": "e754eac22a86dfd15d38c208f9c61a497f4e7cccd30871510effa9faa18a7a5c",
+    "sha256": "3a8b74c401dedbf9f94dc820cd202a536d69ec472d61e08fd2563bfbf4d11b66",
     "reviewed_for": "agents/rules/ux-apply.md"
   },
   "~/hub/AGENTS.md": {

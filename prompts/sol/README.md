@@ -4,7 +4,7 @@ Prompts for running o-family ("ofam") work with **Sol**: OpenAI Codex CLI, model
 
 ## What Codex already loads (not repeated here)
 
-- `~/.codex/AGENTS.md` links to `~/hub/ai/instructions/AGENTS.md`, the global rules: deterministic work, "the main agent orchestrates; subagents do the work", TUIOS startup and mail. Every run gets them.
+- `~/.codex/AGENTS.md` links to `~/hub/ai/instructions/AGENTS.md`, the global rules: deterministic work, "the main agent orchestrates; subagents do the work", TUIOS startup. Every run gets them.
 - The `AGENTS.md` files from the git root of `-C <dir>` down to it: a run in `~/proj/ochazuke/.worktrees/x` gets the worktree's ochazuke guide (`project_doc_max_bytes = 65536` keeps it whole).
 - `~/hub/AGENTS.md` (the family rules) loads only for runs under the hub repo. The prompts therefore carry the family rules, the ochazuke invariants and the coordinator's standing rules (the Claude memory notes) themselves.
 
@@ -60,7 +60,7 @@ while kill -0 "$(cat $L/pid)" 2>/dev/null; do sleep 60; done; cat $L/report.md
 ```
 
 - `workspace-write` keeps `.git` read-only, so a lane cannot commit without `--add-dir $REPO/.git`; Go's build and module caches need `--add-dir` too. `/tmp` is writable.
-- Unsetting `TUIOS_*` stops a lane from reading (and marking read) the launching pane's mail.
+- Unsetting `TUIOS_*` stops a lane from mistaking itself for the launching pane (its startup rule would otherwise run `tuios --skill` and act on your session and pane).
 - Single values can be given on the command line instead: `render.py lane.md brief.md BASE=v0.54.0 TRAILER=@trailer.txt`.
 
 ### Interactive (`codex`)
