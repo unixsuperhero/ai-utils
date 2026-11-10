@@ -39,7 +39,7 @@ REPO=~/proj/ochazuke BASE=main LANE=std-verbs-s1 L=/tmp/$LANE
 mkdir -p $L && git -C $REPO worktree add .worktrees/$LANE -b $LANE $BASE
 cp $P/brief-template.md $L/brief.md     # fill every section: repo, base, lane, task, done-when, trailer
 python3 -I $P/render.py $P/lane.md $L/brief.md > $L/prompt.md   # refuses while a section is empty
-env -u TUIOS_ENV -u TUIOS_SESSION -u TUIOS_PANE_ID \
+env -u TUIOS_ENV -u TUIOS_SESSION -u TUIOS_PANE_ID -u MTM_ENV -u MTM_SESSION -u MTM_PANE_ID \
   nohup nice codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -C $REPO/.worktrees/$LANE --sandbox workspace-write \
     --add-dir $REPO/.git --add-dir ~/.cache/go-build --add-dir ~/.cache/go-tmp --add-dir ~/go/pkg/mod \
     -o $L/report.md - < $L/prompt.md > $L/log.txt 2>&1 &
