@@ -120,3 +120,7 @@ Verified with a disposable source file: terminal review commands, reopening save
 ## code-inventory — map a Go codebase before a refactor
 
 Skill: [`code-inventory/SKILL.md`](code-inventory/SKILL.md). Run `code-inventory/code-inventory PATH [--out DIR]` on a Go module: it writes `report.md` and one TSV per table (largest structs and their field readers and writers, field clusters, repeated field groups, hand-decoded maps, tuples, ids built in strings, a responsibility-by-subject grid, sizes). Needs Go; the script builds the program into `~/.cache/code-inventory/` on first run. `--rules code-inventory/rules/ofam.json` adds the o-family responsibility rules.
+
+## systematic-restructure — restructure a whole codebase on purpose
+
+Skill: [`systematic-restructure/SKILL.md`](systematic-restructure/SKILL.md). Inventory, shared-contract spine, mapping, owner discussion, one-slice proof, measured mechanical batches, shrink-only rule checks; templates in `systematic-restructure/templates/`.
