@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# code-inventory PATH [flags]: build the Go program next to this script into
+# a cache (once per source change) and run it. --help lists the flags.
+set -euo pipefail
+src="${BASH_SOURCE[0]}"
+src="$(readlink -f "$src" 2>/dev/null || echo "$src")"
+here="$(cd "$(dirname "$src")" && pwd)"
+cache="${CODE_INVENTORY_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/code-inventory}"
+if command -v sha256sum >/dev/null 2>&1; then sum=(sha256sum); else sum=(shasum -a 256); fi
+hash="$(cd "$here" && ls go.mod go.sum *.go | grep -v '_test\.go$' | xargs cat | "${sum[@]}" | cut -c1-16)"
+bin="$cache/code-inventory-$hash"
+if [ ! -x "$bin" ]; then
+  mkdir -p "$cache"
+  echo "code-inventory: building into $bin" >&2
+  (cd "$here" && GOWORK=off GOFLAGS="${GOFLAGS:-} -trimpath" go build -o "$bin.tmp.$$" .)
+  mv "$bin.tmp.$$" "$bin"
+  for old in "$cache"/code-inventory-*; do
+    [ "$old" = "$bin" ] || rm -f "$old"
+  done
+fi
+exec "$bin" "$@"

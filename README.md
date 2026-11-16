@@ -116,3 +116,7 @@ Then tell the assistant: **“Apply the mgmt session at /path/to/session.json.�
 Sessions default to `~/.local/state/mgmt/`, outside your project. They contain source excerpts and decisions; session files are owner-readable/writable only. Nothing is installed into global skill discovery automatically: load the skill by path as above, or register its directory through your assistant's existing skill mechanism.
 
 Verified with a disposable source file: terminal review commands, reopening saved choices, selected-only removal by an executor, completion receipts, repeated-apply exclusion, interrupted-run protection, private session permissions, and overwrite rejection.
+
+## code-inventory — map a Go codebase before a refactor
+
+Skill: [`code-inventory/SKILL.md`](code-inventory/SKILL.md). Run `code-inventory/code-inventory PATH [--out DIR]` on a Go module: it writes `report.md` and one TSV per table (largest structs and their field readers and writers, field clusters, repeated field groups, hand-decoded maps, tuples, ids built in strings, a responsibility-by-subject grid, sizes). Needs Go; the script builds the program into `~/.cache/code-inventory/` on first run. `--rules code-inventory/rules/ofam.json` adds the o-family responsibility rules.

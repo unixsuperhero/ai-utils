@@ -1,0 +1,33 @@
+{
+  "replace": true,
+  "responsibilities": ["persist", "daemon", "process", "extract-context", "history", "notify", "keys", "render"],
+  "rules": [
+    {"tag": "persist", "level": "base", "kind": "pkg", "pattern": "^database/sql$"},
+    {"tag": "persist", "level": "base", "kind": "pkg", "pattern": "^modernc\\.org/sqlite"},
+    {"tag": "persist", "level": "base", "kind": "func", "pattern": "^os\\.(WriteFile|Create|CreateTemp|OpenFile|Rename|Remove|RemoveAll|Mkdir|MkdirAll|MkdirTemp|Truncate|Symlink|Link|Chmod|Chtimes)$"},
+    {"tag": "persist", "level": "named", "kind": "pkg", "pattern": "^ofam\\.dev/matomeru/(store|internal/draft|internal/relations)(/|$)"},
+    {"tag": "persist", "level": "named", "kind": "recv", "pattern": "Store$"},
+    {"tag": "daemon", "level": "base", "kind": "pkg", "pattern": "^net(/rpc)?$"},
+    {"tag": "daemon", "level": "named", "kind": "pkg", "pattern": "^ofam\\.dev/matomeru/internal/daemon(/|$)"},
+    {"tag": "process", "level": "base", "kind": "pkg", "pattern": "^os/exec$"},
+    {"tag": "process", "level": "base", "kind": "func", "pattern": "^(os\\.(StartProcess|FindProcess)|syscall\\.(Exec|Kill|ForkExec|StartProcess))$"},
+    {"tag": "process", "level": "base", "kind": "pkg", "pattern": "^github\\.com/(creack/pty|charmbracelet/x/(xpty|conpty))"},
+    {"tag": "process", "level": "named", "kind": "pkg", "pattern": "^ofam\\.dev/matomeru/internal/(harness|drive)(/|$)"},
+    {"tag": "extract-context", "level": "base", "kind": "pkg", "pattern": "^(regexp|github\\.com/dlclark/regexp2(/v2)?)$"},
+    {"tag": "extract-context", "level": "named", "kind": "pkg", "pattern": "^ofam\\.dev/matomeru/internal/(turns|agenthook|locate|contextitems|panesignals)(/|$)"},
+    {"tag": "extract-context", "level": "named", "kind": "callee", "pattern": "^(?i:extract)"},
+    {"tag": "history", "level": "named", "kind": "pkg", "pattern": "^ofam\\.dev/matomeru/internal/history(/|$)"},
+    {"tag": "history", "level": "named", "kind": "recv", "pattern": "(?i)history|undo"},
+    {"tag": "history", "level": "named", "kind": "callee", "pattern": "(?i)undo|redo|history"},
+    {"tag": "history", "level": "named", "kind": "type", "pattern": "(?i)\\.[A-Za-z]*(history|undo)[A-Za-z]*$"},
+    {"tag": "notify", "level": "named", "kind": "pkg", "pattern": "^ofam\\.dev/matomeru/internal/(notify|notices)(/|$)"},
+    {"tag": "notify", "level": "named", "kind": "callee", "pattern": "(?i)notif|notice|toast"},
+    {"tag": "notify", "level": "named", "kind": "recv", "pattern": "(?i)notif|notice"},
+    {"tag": "keys", "level": "base", "kind": "type", "pattern": "^charm\\.land/bubbletea/v2\\.Key"},
+    {"tag": "keys", "level": "named", "kind": "type", "pattern": "\\.(Binding|Bindings|KeyMap|Keymap)$"},
+    {"tag": "keys", "level": "named", "kind": "callee", "pattern": "(?i)binding|keymap|^resolvekey"},
+    {"tag": "render", "level": "base", "kind": "pkg", "pattern": "^(charm\\.land/(lipgloss|glamour)|github\\.com/charmbracelet/(lipgloss|x/ansi))"},
+    {"tag": "render", "level": "named", "kind": "callee", "pattern": "^(View|view|Render|render|Draw|draw)"},
+    {"tag": "render", "level": "base", "kind": "own", "pattern": "^(View|view|Render|render|Draw|draw)", "with": "^strings\\.Builder$"}
+  ]
+}
